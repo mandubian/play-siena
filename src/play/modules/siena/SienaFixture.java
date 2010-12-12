@@ -82,7 +82,6 @@ public class SienaFixture {
 					serialize(objects.get(key), "object", params);
 					@SuppressWarnings("unchecked")
 					Class<Model> cType = (Class<Model>)Play.classloader.loadClass(type);
-					//resolveDependencies(cType, params, idCache);
 					Model model = cType.newInstance();
 					for(Field f : model.getClass().getFields()) {
 						// TODO: handle something like FileAttachment
@@ -95,6 +94,8 @@ public class SienaFixture {
 							Object value = null;
 							if((value=idCache.get(k)) != null) {
 								f.set(model, value);
+							} else {
+								throw new RuntimeException("Cannot load fixture " + name + ", can not find reference id '" + k + "' for type " + type);
 							}
 						} else {
 							Object value = objects.get(key).get(f.getName());
@@ -106,9 +107,7 @@ public class SienaFixture {
 					}
 					
 					model.insert();
-                        
-					Class<?> tType = cType;
-					idCache.put(tType.getName() + "-" + id, model);
+					idCache.put(cType.getName() + "-" + id, model);
 					
 				}
 			}
