@@ -100,7 +100,35 @@ public class SienaFixture {
 						} else {
 							Object value = objects.get(key).get(f.getName());
 							if(value != null) {
-								f.set(model, value);
+								if(f.getType().isAssignableFrom(Long.class)){
+									if(value.getClass().isAssignableFrom(Integer.class)){
+										f.set(model, ((Integer)value).longValue());
+									}
+									else if(value.getClass().isAssignableFrom(Long.class)){
+										f.set(model, (Long)value);
+									}
+									else{
+										throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
+									}
+								} else if(f.getType().isAssignableFrom(Integer.class)){
+									if(value.getClass().isAssignableFrom(Integer.class)){
+										f.set(model, (Integer)value);
+									}
+									else{
+										throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
+									}
+								} else if(f.getType().isAssignableFrom(Short.class)){
+									if(value.getClass().isAssignableFrom(Integer.class)){
+										f.set(model, ((Integer)value).shortValue());
+									}
+									else if(value.getClass().isAssignableFrom(Short.class)){
+										f.set(model, (Short)value);
+									}
+									else{
+										throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
+									}
+								}
+								else f.set(model, value);
 							}
 						}
 
