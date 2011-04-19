@@ -1,0 +1,10 @@
+# Application dependencies
+
+self: play-siena -> play-siena 2.0
+
+require:
+    - play 1.2
+    - org.apache.ddlutils -> ddlutils 1.0 :
+        exclude:
+            - xerces -> *
+    
