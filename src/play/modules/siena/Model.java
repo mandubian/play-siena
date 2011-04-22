@@ -26,6 +26,7 @@ import siena.ClassInfo;
 import siena.Filter;
 import siena.Json;
 import siena.Query;
+import siena.core.batch.Batch;
 import siena.embed.Embedded;
 
 import com.google.gson.JsonParseException;
@@ -256,4 +257,40 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
         }
         return false;
     }
+    
+    // functions to enhance    
+    public static <T extends Model> Query<T> all() {
+    	throw new UnsupportedOperationException(
+              "Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
+
+    public static <T extends Model> Batch<T> batch() {
+    	throw new UnsupportedOperationException(
+        	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
+    
+     public static <T extends Model> T create(String name, Params params) {
+    	 throw new UnsupportedOperationException(
+        	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
+     
+     public static long count() {
+    	 throw new UnsupportedOperationException(
+     		"Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
+     
+     public static <T extends Model> List<T> findAll() {
+         throw new UnsupportedOperationException(
+         	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+      }
+     
+     public static long deleteAll() {
+    	 throw new UnsupportedOperationException(
+    	 	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
+     
+     public static <T extends Model> T findById(Object id) {
+    	 throw new UnsupportedOperationException(
+    	 	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+     }
 }

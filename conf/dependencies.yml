@@ -3,8 +3,6 @@
 self: play-siena -> play-siena 2.0
 
 require:
-    - play 1.2
-    - org.apache.ddlutils -> ddlutils 1.0 :
-        exclude:
-            - xerces -> *
+    - play -> play master-2115ef4
+    - org.apache.ddlutils -> ddlutils 1.0
     
