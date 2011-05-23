@@ -5,7 +5,6 @@ package play.modules.siena;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,7 +24,7 @@ import play.mvc.Scope.Params;
 import siena.ClassInfo;
 import siena.Filter;
 import siena.Json;
-import siena.Query;
+import siena.SienaException;
 import siena.core.batch.Batch;
 import siena.embed.Embedded;
 
@@ -45,7 +44,7 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 	 */
 	@Override
 	public void _save() {
-		this.insert();
+		this.save();
 	}
 
 	/* (non-Javadoc)
@@ -64,20 +63,24 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 		return siena.Util.readField(this, ClassInfo.getClassInfo(getClass()).getIdField());
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T extends Model> T create(Class<?> type, String name,
-			Map<String, String[]> params, Annotation[] annotations) {
-		try {
-			Constructor<?> c = type.getDeclaredConstructor();
-			c.setAccessible(true);
-			Object model = c.newInstance();
-			return (T) edit(model, name, params, annotations);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	public static <T extends Model> T create(Class<T> type, String name,
+			Map<String, String[]> params) {
+		return (T) create(type, name, params, new Annotation[0]);
 	}
 	
-	public static <T extends Model> T edit(Object o, String name, Map<String, String[]> params, Annotation[] annotations) {
+	public static <T extends Model> T create(Class<T> type, String name,
+			Map<String, String[]> params, Annotation[] annotations) {
+		T model = siena.Util.createObjectInstance(type);
+		return (T) edit(model, name, params, annotations);
+	}
+	
+    @SuppressWarnings("unchecked")
+	public <T extends Model> T edit(String name, Map<String, String[]> params) {
+        edit(this, name, params, new Annotation[0]);
+        return (T) this;
+    }
+	
+	public static <T extends Model> T edit(T o, String name, Map<String, String[]> params, Annotation[] annotations) {
 		try {
 			BeanWrapper bw = new BeanWrapper(o.getClass());
 			// Start with relations
@@ -94,7 +97,7 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 				boolean multiple = false;
 				String owner = null;
 
-				// ONE TO MANY association
+				// ONE TO MANY or ONE TO ONE association
 				// entity = type inherits SienaSupport
 				if(Model.class.isAssignableFrom(field.getType())) {
 					isEntity = true;
@@ -103,7 +106,7 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 
 				// MANY TO ONE association
 				// type QUERY<T> + annotation @Filter 
-				else if(Query.class.isAssignableFrom(field.getType())){
+				else if(siena.Query.class.isAssignableFrom(field.getType())){
 					isEntity = true;
 					multiple = true;
 					Class<?> fieldType = 
@@ -159,13 +162,14 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 								}
 								@SuppressWarnings("unchecked")
 								Class<? extends Model> relClass = (Class<? extends Model>)Play.classloader.loadClass(relation);
-								Object res = 
+								Model res = 
 									Model.all(relClass)
 										.filter("id", Binder.directBind(_id, Model.Manager.factoryFor(relClass).keyType()))
 										.get();
 								if(res!=null){
 									// sets the object to the owner field into the relation entity
 									relClass.getField(owner).set(res, o);
+									res.save();
 								}
 									
 								else Validation.addError(name+"."+field.getName(), "validation.notFound", _id);
@@ -205,17 +209,26 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
 					String[] jsonStr = params.get(name + "." + field.getName());
 					if (jsonStr != null && jsonStr.length > 0 && !jsonStr[0].equals("")) {
 						try {
-							com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
-							parser.parse(jsonStr[0]);
+							//com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
+							//parser.parse(jsonStr[0]);
 							
-							params.remove(name + "." + field.getName());
 							Json json = Json.loads(jsonStr[0]);
-							if(json!=null)
+							if(json!=null){
 								bw.set(field.getName(), o, json);
+								params.remove(name + "." + field.getName());
+							}
 							else Validation.addError(name+"."+field.getName(), "validation.notParsable");
 						}catch(JsonParseException ex){
 							ex.printStackTrace();
-							Logger.error("json parser exception:%s", 
+							Logger.error("json parserdelete exception:%s", 
+									ex.getCause()!=null?ex.getCause().getMessage(): ex.getMessage());
+							Validation.addError(
+									name+"."+field.getName(), 
+									"validation.notParsable", 
+									ex.getCause()!=null?ex.getCause().getMessage(): ex.getMessage());
+						}catch(SienaException ex){
+							ex.printStackTrace();
+							Logger.error("json parserdelete exception:%s", 
 									ex.getCause()!=null?ex.getCause().getMessage(): ex.getMessage());
 							Validation.addError(
 									name+"."+field.getName(), 
@@ -259,38 +272,40 @@ public class Model extends siena.Model implements Serializable, play.db.Model {
     }
     
     // functions to enhance    
-    public static <T extends Model> Query<T> all() {
+    // we don't return a siena.Query because the strict generic typed siena.Query gives compilation
+    // errors when you create a class inheriting from Model and calling all().filter().fetch() for ex
+	public static Query all() {
     	throw new UnsupportedOperationException(
-              "Please extends your model from @play.modules.siena.Model to be enhanced.");
+              "Please annotate your model with @siena.Entity annotation.");
      }
 
     public static <T extends Model> Batch<T> batch() {
     	throw new UnsupportedOperationException(
-        	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+    		"Please annotate your model with @siena.Entity annotation.");
      }
     
      public static <T extends Model> T create(String name, Params params) {
     	 throw new UnsupportedOperationException(
-        	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+    	 	"Please annotate your model with @siena.Entity annotation.");
      }
      
      public static long count() {
     	 throw new UnsupportedOperationException(
-     		"Please extends your model from @play.modules.siena.Model to be enhanced.");
+ 	 		"Please annotate your model with @siena.Entity annotation.");
      }
      
      public static <T extends Model> List<T> findAll() {
-         throw new UnsupportedOperationException(
-         	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+    	 throw new UnsupportedOperationException(
+    	 	"Please annotate your model with @siena.Entity annotation.");
       }
      
      public static long deleteAll() {
     	 throw new UnsupportedOperationException(
-    	 	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+    	 	"Please annotate your model with @siena.Entity annotation.");
      }
      
      public static <T extends Model> T findById(Object id) {
     	 throw new UnsupportedOperationException(
-    	 	"Please extends your model from @play.modules.siena.Model to be enhanced.");
+    	 	"Please annotate your model with @siena.Entity annotation.");
      }
 }

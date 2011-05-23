@@ -1,0 +1,13 @@
+/.settings
+/test
+/db
+/modules
+/test:play.lock.db
+/.project
+/war
+/fs:play.lock.db
+/eclipse
+/lib
+/.classpath
+/test-result
+/tmp

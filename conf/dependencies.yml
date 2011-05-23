@@ -1,8 +1,11 @@
 # Application dependencies
 
-self: play-siena -> play-siena 2.0
+self: play -> siena 2.0
 
 require:
-    - play -> play master-2115ef4
-    - org.apache.ddlutils -> ddlutils 1.0
+    - play [1.2.1,)
+    - org.apache.ddlutils -> ddlutils 1.0:
+        exclude:
+        - xerces -> *
+        - log4j -> *
     

@@ -2,28 +2,39 @@ package play.modules.siena;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.ddlutils.DatabaseOperationException;
+import org.apache.ddlutils.Platform;
+import org.apache.ddlutils.PlatformFactory;
+import org.apache.ddlutils.model.Database;
+
 import play.Logger;
 import play.Play;
 import play.PlayPlugin;
+import play.classloading.ApplicationClasses.ApplicationClass;
 import play.data.binding.Binder;
 import play.db.Model.Property;
 import play.db.jpa.JPA;
 import play.exceptions.UnexpectedException;
 import siena.ClassInfo;
+import siena.Generator;
+import siena.Id;
 import siena.Json;
 import siena.PersistenceManager;
 import siena.PersistenceManagerFactory;
 import siena.Query;
+import siena.embed.Embedded;
 import siena.gae.GaePersistenceManager;
+import siena.jdbc.H2PersistenceManager;
 import siena.jdbc.JdbcPersistenceManager;
 import siena.jdbc.PostgresqlPersistenceManager;
 import siena.jdbc.ddl.DdlGenerator;
@@ -33,8 +44,31 @@ public class SienaPlugin extends PlayPlugin {
     private static PersistenceManager persistenceManager;
     private static DdlGenerator generator;
     
+    private SienaEnhancer enhancer = new SienaEnhancer();
+
     public static PersistenceManager pm() {
         return persistenceManager;
+    }
+    
+    public static String dbType(){
+    	for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
+            if(plugin.getClass().getSimpleName().equals("GAEPlugin")) {
+                return "nosql:gae";
+            }
+        }
+    	
+    	final String db = Play.configuration.getProperty("db");
+        final String dbUrl = Play.configuration.getProperty("db.url");
+        if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
+        	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db config");
+        }
+        if((db!=null && db.contains("postgres")) || (dbUrl!=null && dbUrl.contains("postgres"))){
+        	return "sql:postgresql";
+        }else if((db!=null && db.contains("h2")) || (dbUrl!=null && dbUrl.contains("h2"))){
+        	return "sql:h2:mysql";
+        }else {
+        	return "sql:mysql";
+        }
     }
     
     @Override
@@ -51,36 +85,104 @@ public class SienaPlugin extends PlayPlugin {
                 break;
             }
         }
+
+        @SuppressWarnings("rawtypes")
+		List<Class> classes = Play.classloader.getAssignableClasses(Model.class);
         
-        // The persistence manager
-        if(!gae) {
+        // DDL is for SQL and not in prod mode
+        if(!gae) {        	
+        	// JDBC
+        	String ddlType = "mysql";
         	// initializes DDL Generator
         	generator = new DdlGenerator();
-        	
-        	// determines if it is Postgres
-        	final String db = Play.configuration.getProperty("db");
+			Connection connection = new PlayConnectionManager().getConnection();
+
+			// determines DB type
+			final String dbType = dbType();
+			Logger.debug("Siena DB Type: %s", dbType);
+			final String db = Play.configuration.getProperty("db");
             final String dbUrl = Play.configuration.getProperty("db.url");
             if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
             	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db config");
             }
-            if((db!=null && db.contains("postgres")) || (dbUrl!=null && dbUrl.contains("postgres"))){
+            if(dbType.contains("postgresql")){
             	persistenceManager = new PostgresqlPersistenceManager(new PlayConnectionManager(), null);
+            	ddlType = "postgresql";
+            }else if(dbType.contains("h2")){
+            	// the H2 dbMode in Play is "mysql" 
+            	persistenceManager = new H2PersistenceManager(new PlayConnectionManager(), null, "mysql");
+            	ddlType = "mysql";
             }
             else {
             	persistenceManager = new JdbcPersistenceManager(new PlayConnectionManager(), null);
             }
+            
+            // Alter tables before installing
+            for(Class<?> c : classes) {
+            	// adds classes to the DDL generator
+            	generator.addTable(c);
+            }
+            // get the Database model
+			Database database = generator.getDatabase();
+	
+			Platform platform = PlatformFactory.createNewPlatformInstance(ddlType);
+						
+			// siena.ddl can have create/update/ddl
+			// if siena.ddl is defined, uses it
+			// if not: 
+			// in dev mode, will be update by default
+			// in prod mode, will be none by default
+			if(Play.mode.isDev()){
+				String ddl = Play.configuration.getProperty("siena.ddl", "update");
+				Logger.debug("Siena DDL dev mode: %s", ddl);
+				if ("create".equals(ddl)) {
+					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterTablesSql(connection, database));
+					// creates tables and do not drop tables and do not continues on error 
+					try {
+						platform.createTables(connection, database, false, false);
+					}catch(DatabaseOperationException ex){
+						Logger.warn("Siena DDL createTables generated exception:%s", ex.getCause()!=null?ex.getCause():ex.getMessage());
+					}
+				}else if("update".equals(ddl)){
+					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterTablesSql(connection, database));
+					// alters tables and continues on error 
+					platform.alterTables(connection, database, true);
+				}
+			}
+			else if(Play.mode.isProd()){
+				String ddl = Play.configuration.getProperty("siena.ddl", "none");
+				Logger.debug("Siena DDL prod mode: %s", ddl);
+				if ("create".equals(ddl)) {
+					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterTablesSql(connection, database));
+					// creates tables and do not drop tables and do not continues on error 
+					try {
+						platform.createTables(connection, database, false, false);
+					}catch(DatabaseOperationException ex){
+						Logger.warn("Siena DDL createTables generated exception:%s", ex.getCause()!=null?ex.getCause():ex.getMessage());
+					}
+				}else if("update".equals(ddl)){
+					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterTablesSql(connection, database));
+					// alters tables and continues on error 
+					platform.alterTables(connection, database, true);
+				}
+			}
+			
+			// is it required ?
+			// connection.close();
+            persistenceManager.init(null);
+			                    
         } else {
+			Logger.debug("Siena DB Type: GAE");
             persistenceManager = new GaePersistenceManager();
             persistenceManager.init(null);
         }
-        
-        // Install all classes
-        for(Class<?> c : Play.classloader.getAssignableClasses(Model.class)) {
-        	// adds classes to the DDL generator
-        	generator.addTable(c);
+
+        // Install all classes in PersistenceManager
+        for(Class<?> c : classes) {
         	// installs it into the PM
             PersistenceManagerFactory.install(persistenceManager, c);
         }
+
     }
     
     @Override
@@ -92,15 +194,21 @@ public class SienaPlugin extends PlayPlugin {
             String keyName = Model.Manager.factoryFor(clazz).keyName();
             String idKey = name + "." + keyName;
             if (params.containsKey(idKey) && params.get(idKey).length > 0 && params.get(idKey)[0] != null && params.get(idKey)[0].trim().length() > 0) {
-                String id = params.get(idKey)[0];
-                try {
-                    Query<?> query = pm().createQuery(clazz).filter(keyName, 
-                    		play.data.binding.Binder.directBind(name, annotations, id + "", Model.Manager.factoryFor(clazz).keyType()));
-                    Object o = query.get();
-                    return Model.edit(o, name, params, annotations);
-                } catch (Exception e) {
-                    throw new UnexpectedException(e);
-                }
+            	ClassInfo sienaInfo = ClassInfo.getClassInfo(clazz);
+            	Field idField = sienaInfo.getIdField();
+            	Id idAnn = idField.getAnnotation(Id.class);
+    			if(idAnn != null && idAnn.value() == Generator.AUTO_INCREMENT) {
+    				// ONLY long ID can be auto_incremented
+	                String id = params.get(idKey)[0];
+	                try {
+	                    Query<? extends Model> query = pm().createQuery(clazz).filter(keyName, 
+	                    		play.data.binding.Binder.directBind(name, annotations, id + "", Model.Manager.factoryFor(clazz).keyType()));
+	                    Model o = query.get();
+	                    return Model.edit(o, name, params, annotations);
+	                } catch (Exception e) {
+	                    throw new UnexpectedException(e);
+	                }
+    			}
             }
             return Model.create(clazz, name, params, annotations);
         }
@@ -110,9 +218,14 @@ public class SienaPlugin extends PlayPlugin {
     @Override
     public Object bind(String name, Object o, Map<String, String[]> params) {
         if (o instanceof Model) {
-            return Model.edit(o, name, params, null);
+            return Model.edit((Model)o, name, params, null);
         }
         return null;
+    }
+    
+    @Override
+    public void enhance(ApplicationClass applicationClass) throws Exception {
+        enhancer.enhanceThisClass(applicationClass);
     }
     
     @SuppressWarnings("unchecked")
@@ -304,8 +417,18 @@ public class SienaPlugin extends PlayPlugin {
 			
 			// SEARCH
 			// TODO define the search strings
-			if(keywords != null && searchFields != null && searchFields.size() != 0){
-				q.search(keywords, (String[])searchFields.toArray());
+			if(keywords != null){
+				if(searchFields != null && searchFields.size() != 0){
+					q.search(keywords, (String[])searchFields.toArray());
+				}else{
+					ClassInfo ci = ClassInfo.getClassInfo(clazz);
+					String[] strs = new String[ci.allFields.size()];
+					int i=0;
+					for(Field f : ClassInfo.getClassInfo(clazz).allFields){
+						strs[i++] = f.getName();
+					}
+					q.search(keywords, strs);
+				}
 			}
 			
 			// WHERE
@@ -320,8 +443,18 @@ public class SienaPlugin extends PlayPlugin {
 			
 			// SEARCH
 			// TODO define the search strings
-			if(keywords != null && searchFields != null && searchFields.size() != 0){
-				q.search(keywords, (String[])searchFields.toArray());
+			if(keywords != null){
+				if(searchFields != null && searchFields.size() != 0){
+					q.search(keywords, (String[])searchFields.toArray());
+				}else{
+					ClassInfo ci = ClassInfo.getClassInfo(clazz);
+					String[] strs = new String[ci.allFields.size()];
+					int i=0;
+					for(Field f : ClassInfo.getClassInfo(clazz).allFields){
+						strs[i++] = f.getName();
+					}
+					q.search(keywords, strs);
+				}
 			}
 			
 			// WHERE
@@ -339,7 +472,17 @@ public class SienaPlugin extends PlayPlugin {
 		public List<Property> listProperties() {
 			List<Model.Property> properties = new ArrayList<Model.Property>();
             Set<Field> fields = new LinkedHashSet<Field>();
-            Collections.addAll(fields, (Field[])ClassInfo.getClassInfo(clazz).allFields.toArray());
+            // can't use classInfo.allFields as we need also Query fields
+            for(Field f:clazz.getDeclaredFields()){
+            	if(f.getType() == Class.class ||
+            			(f.getModifiers() & Modifier.TRANSIENT) == Modifier.TRANSIENT ||
+            			(f.getModifiers() & Modifier.STATIC) == Modifier.STATIC ||
+            			f.isSynthetic()) 
+            	{         
+            		continue;
+            	}
+            	fields.add(f);
+            }
 
             for (Field f : fields) {
                 Model.Property mp = buildProperty(f);
@@ -394,14 +537,31 @@ public class SienaPlugin extends PlayPlugin {
             
             // JSON
             if (Json.class.isAssignableFrom(field.getType())) {
-                modelProperty.choices = new Model.Choices() {
-                    @SuppressWarnings("unchecked")
-                    public List<Object> list() {
-                        return (List<Object>) Arrays.asList(field.getType().getEnumConstants());
-                    }
-                };
+                modelProperty.type = String.class;
             }
 
+            if (field.isAnnotationPresent(Embedded.class)) {
+            	if(List.class.isAssignableFrom(field.getType())){
+            		final Class<?> fieldType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+            		
+            		modelProperty.isRelation = true;
+                    modelProperty.isMultiple = true;
+                    modelProperty.relationType = fieldType;
+            	}
+            	else if(Map.class.isAssignableFrom(field.getType())){
+            		// gets T2 for map<T1,T2>
+            		final Class<?> fieldType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[1];
+            		modelProperty.isRelation = true;
+                    modelProperty.isMultiple = true;
+                    modelProperty.relationType = fieldType;
+            	}
+            	else {
+            		modelProperty.isRelation = true;
+            		modelProperty.isMultiple = false;
+            		modelProperty.relationType = field.getType();
+            	}
+            }
+            
             modelProperty.name = field.getName();
             if (field.getType().equals(String.class)) {
                 modelProperty.isSearchable = true;
