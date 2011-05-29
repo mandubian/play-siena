@@ -34,6 +34,7 @@ import siena.SienaException;
 import siena.embed.Embedded;
 
 import com.google.gson.JsonParseException;
+import com.mysql.jdbc.Util;
 
 /**
  * Static functions to create/edit a Siena model
@@ -71,6 +72,7 @@ public class SienaModelUtils {
     }
 	
 	public static Object keyValue(Object obj) {
+		if(obj == null) return null;
         Field k = keyField(obj.getClass());
         try {
             // Embedded class has no key value
@@ -155,7 +157,7 @@ public class SienaModelUtils {
 							ids = params.get(name + "." + field.getName() + ".id");
 						}
 
-						if (ids != null) {
+						if (ids != null) {							
 							params.remove(name + "." + field.getName() + ".id");
 							params.remove(name + "." + field.getName() + "@id");
 							for (String _id : ids) {

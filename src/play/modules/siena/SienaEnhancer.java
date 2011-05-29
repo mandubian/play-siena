@@ -1,14 +1,11 @@
 package play.modules.siena;
 
-import java.lang.reflect.Field;
-
 import javassist.CtClass;
-import javassist.CtField;
 import javassist.CtMethod;
+import javassist.NotFoundException;
 import play.Logger;
 import play.classloading.ApplicationClasses.ApplicationClass;
 import play.classloading.enhancers.Enhancer;
-import siena.Id;
 
 /**
  * This class uses the Play framework enhancement process to enhance classes
@@ -37,12 +34,20 @@ public class SienaEnhancer extends Enhancer{
         Logger.debug("Play-Siena: enhancing EnhancedModel " + entityName);
         
         // all
-        CtMethod all = CtMethod.make("public static play.modules.siena.QueryWrapper all() { return new play.modules.siena.QueryWrapper(siena.Model.all("+entityName+".class)); }", ctClass);
-        ctClass.addMethod(all);
+        try {
+        	ctClass.getDeclaredMethod("all");
+        }catch(NotFoundException ex){
+            CtMethod all = CtMethod.make("public static play.modules.siena.QueryWrapper all() { return new play.modules.siena.QueryWrapper(siena.Model.all("+entityName+".class)); }", ctClass);
+            ctClass.addMethod(all);        	
+        }
   
         // batch
-        CtMethod batch = CtMethod.make("public static play.modules.siena.BatchWrapper batch() { return new play.modules.siena.BatchWrapper(siena.Model.batch("+entityName+".class)); }", ctClass);
-        ctClass.addMethod(batch);
+        try {
+        	ctClass.getDeclaredMethod("batch");
+        }catch(NotFoundException ex){
+        	CtMethod batch = CtMethod.make("public static play.modules.siena.BatchWrapper batch() { return new play.modules.siena.BatchWrapper(siena.Model.batch("+entityName+".class)); }", ctClass);
+        	ctClass.addMethod(batch);
+        }
 
         // create
         CtMethod create = CtMethod.make("public static play.modules.siena.EnhancedModel create(String name, play.mvc.Scope.Params params) { return play.modules.siena.EnhancedModel.create("+entityName+".class, name, params.all()); }",ctClass);
