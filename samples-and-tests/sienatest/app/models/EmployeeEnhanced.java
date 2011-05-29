@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import play.data.validation.Password;
+import play.modules.siena.EnhancedModel;
 import siena.Column;
 import siena.DateTime;
 import siena.Entity;
@@ -24,8 +25,8 @@ import siena.embed.EmbeddedList;
 import siena.embed.EmbeddedMap;
 
 
-@Table("employees")
-public class Employee extends Model {
+@Table("employees_enhanced")
+public class EmployeeEnhanced extends EnhancedModel {
         
         @Id(Generator.AUTO_INCREMENT)
         public Long id;
@@ -54,10 +55,10 @@ public class Employee extends Model {
         public Date fireDate;
         
         @Column("boss") @Index("boss_index")
-        public Employee boss;
+        public EmployeeEnhanced boss;
         
         @Filter("boss")
-        public siena.Query<Employee> employees;
+        public siena.Query<EmployeeEnhanced> employees;
                
         @Embedded
         public Image profileImage;
@@ -98,7 +99,4 @@ public class Employee extends Model {
         	return firstName + " " + lastName;
         }
 
-        public static Query<Employee> all() {
-        	return Model.all(Employee.class);
-        }
 }

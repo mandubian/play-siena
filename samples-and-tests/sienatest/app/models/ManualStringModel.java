@@ -1,13 +1,13 @@
 package models;
 
-import play.modules.siena.Model;
+import play.modules.siena.EnhancedModel;
 import siena.Generator;
 import siena.Id;
+import siena.Model;
 import siena.Table;
-import siena.embed.EmbeddedMap;
 
 @Table("manual_string_models")
-public class ManualStringModel extends Model{
+public class ManualStringModel extends EnhancedModel{
     @Id(Generator.NONE)
     public String id;
     

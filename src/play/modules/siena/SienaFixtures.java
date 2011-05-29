@@ -8,14 +8,11 @@ import java.lang.reflect.ParameterizedType;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,11 +24,11 @@ import org.yaml.snakeyaml.scanner.ScannerException;
 
 import play.Logger;
 import play.Play;
-import play.classloading.ApplicationClasses;
 import play.data.binding.Binder;
 import play.data.binding.types.DateBinder;
 import play.db.DB;
 import play.db.DBPlugin;
+import play.db.Model;
 import play.exceptions.UnexpectedException;
 import play.exceptions.YAMLException;
 import play.libs.IO;
@@ -65,12 +62,14 @@ public class SienaFixtures {
      * Delete all Model instances for the given types using the underlying persistance mechanisms
      * @param types Types to delete
      */
-    public static void delete(Class<? extends Model>... types) {
+    public static void delete(Class<?>... types) {
         idCache.clear();
         disableForeignKeyConstraints();
-        for (Class<? extends Model> type : types) {
+        for (Class<?> type : types) {
             try {
-                Model.Manager.factoryFor(type).deleteAll();
+            	if(ClassInfo.isModel(type)){
+            		SienaPlugin.pm().createQuery(type).delete();
+            	}
             } catch(Exception e) {
                 Logger.error(e, "While deleting " + type + " instances");
             }
@@ -84,25 +83,16 @@ public class SienaFixtures {
      * Delete all Model instances for the given types using the underlying persistance mechanisms
      * @param types Types to delete
      */
-    public static void delete(List<Class<? extends Model>> classes) {
-        @SuppressWarnings("unchecked")
-        Class<? extends Model>[] types = new Class[classes.size()];
-        for (int i = 0; i < types.length; i++) {
-            types[i] = classes.get(i);
-        }
-        delete(types);
+    @SuppressWarnings("rawtypes")
+	public static void delete(List<Class> classes) {
+        delete(classes);
     }
 
     /**
      * Delete all Model instances for the all available types using the underlying persistance mechanisms
      */
-    @SuppressWarnings("unchecked")
     public static void deleteAllModels() {
-        List<Class<? extends Model>> classes = new ArrayList<Class<? extends Model>>();
-        for (ApplicationClasses.ApplicationClass c : Play.classes.getAssignableClasses(Model.class)) {
-            classes.add((Class<? extends Model>)c.javaClass);
-        }
-        delete(classes);
+        delete(SienaModelUtils.getSienaClasses());
     }
 
     
@@ -134,9 +124,8 @@ public class SienaFixtures {
 	                String name = rs.getString("TABLE_NAME");
 	                names.add(name);
 	            }*/
-	            List<Class<? extends Model>> classes = new ArrayList<Class<? extends Model>>();
-	            for (ApplicationClasses.ApplicationClass c : Play.classes.getAssignableClasses(Model.class)) {
-	                ClassInfo ci = ClassInfo.getClassInfo(c.javaClass);
+	            for (Class<?> c : SienaModelUtils.getSienaClasses()) {
+	                ClassInfo ci = ClassInfo.getClassInfo(c);
 	                
 	                names.add(ci.tableName);
 	            }
@@ -176,6 +165,7 @@ public class SienaFixtures {
     }
 
     
+	@SuppressWarnings("unchecked")
 	public static void loadModels(String name) {
 		VirtualFile yamlFile = null;
 		try  {
@@ -195,7 +185,7 @@ public class SienaFixtures {
 			Yaml yaml = new Yaml();
 			Object o = yaml.load(renderedYaml);
 			if (o instanceof LinkedHashMap<?, ?>) {
-				@SuppressWarnings("unchecked") LinkedHashMap<Object, Map<?, ?>> objects = (LinkedHashMap<Object, Map<?, ?>>) o;
+				LinkedHashMap<Object, Map<?, ?>> objects = (LinkedHashMap<Object, Map<?, ?>>) o;
 				for (Object key : objects.keySet()) {
 					Matcher matcher = keyPattern.matcher(key.toString().trim());
 					if (matcher.matches()) {
@@ -212,13 +202,13 @@ public class SienaFixtures {
 							objects.put(key, new HashMap<Object, Object>());
 						}
 						serialize(objects.get(key), "object", params);
-						@SuppressWarnings("unchecked")
-						Class<Model> cType = (Class<Model>)Play.classloader.loadClass(type);
+						Class<?> cType = (Class<?>)Play.classloader.loadClass(type);
 						resolveDependencies(cType, params);
-                        Model model = (Model)Binder.bind("object", cType, cType, null, params);
+                        Object model = Binder.bind("object", cType, cType, null, params);
                         
                         // a List of objectx to save in the case of automatic query for ONE2MANY
-                        List<Model> queryObj = new ArrayList<Model>();
+						@SuppressWarnings("rawtypes")
+						List queryObj = new ArrayList();
                                                 
                         for(Field f : model.getClass().getFields()) {
 							if (f.getType().isAssignableFrom(Map.class)) {
@@ -241,7 +231,7 @@ public class SienaFixtures {
                             	
                             	if(linkedKeys != null){
 	                            	for(String linkedKey: linkedKeys){
-	                            		Model linkedObj = (Model)Model.Manager.factoryFor((Class<? extends Model>)fieldType).findById(idCache.get(type + "-" + linkedKey));
+	                            		Object linkedObj = SienaPlugin.pm().getByKey(fieldType, idCache.get(type + "-" + linkedKey));
 	                            		if(linkedObj != null){
 	                            			siena.Util.setField(linkedObj, fieldType.getField(ownerFieldName), model);
 	                            			queryObj.add(linkedObj);
@@ -251,55 +241,9 @@ public class SienaFixtures {
 	                            	}
                             	}
                             }
-                            	
-                            	
-                            	
-                            	/*else if(Model.class.isAssignableFrom(f.getType())) {
-								String k = f.getType().getName() + "-" + objects.get(key).get(f.getName());
-								Object value = null;
-								if((value=idCache.get(k)) != null) {
-									f.set(model, value);
-								} else {
-									throw new RuntimeException("Cannot load fixture " + name + ", can not find reference id '" + k + "' for type " + type);
-								}
-							} else {
-								Object value = objects.get(key).get(f.getName());
-								if(value != null) {
-									if(f.getType().isAssignableFrom(Long.class)){
-										if(value.getClass().isAssignableFrom(Integer.class)){
-											f.set(model, ((Integer)value).longValue());
-										}
-										else if(value.getClass().isAssignableFrom(Long.class)){
-											f.set(model, (Long)value);
-										}
-										else{
-											throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
-										}
-									} else if(f.getType().isAssignableFrom(Integer.class)){
-										if(value.getClass().isAssignableFrom(Integer.class)){
-											f.set(model, (Integer)value);
-										}
-										else{
-											throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
-										}
-									} else if(f.getType().isAssignableFrom(Short.class)){
-										if(value.getClass().isAssignableFrom(Integer.class)){
-											f.set(model, ((Integer)value).shortValue());
-										}
-										else if(value.getClass().isAssignableFrom(Short.class)){
-											f.set(model, (Short)value);
-										}
-										else{
-											throw new RuntimeException("Cannot load fixture " + name + ", type "+value.getClass().getName()+" not compatible for field of type "+f.getType().getName());
-										}
-									}
-									else f.set(model, value);
-								}
-							}*/
-	
 						}
 						
-                        model._save();
+                        SienaPlugin.pm().save(model);
                         
                         // saves autoquery objects
                         if(!queryObj.isEmpty()){
@@ -308,7 +252,7 @@ public class SienaFixtures {
                         
                         Class<?> tType = cType;
                         while (!tType.equals(Object.class)) {
-                            idCache.put(tType.getName() + "-" + id, Model.Manager.factoryFor(cType).keyValue(model));
+                            idCache.put(tType.getName() + "-" + id, SienaModelUtils.keyValue(model));
                             tType = tType.getSuperclass();
                         }
 					}
@@ -461,18 +405,11 @@ public class SienaFixtures {
         }
     }
 	
-    @SuppressWarnings("unchecked")
-    static void resolveDependencies(Class<Model> type, Map<String, String[]> serialized) {
-        Set<Field> fields = new HashSet<Field>();
-        Class<?> clazz = type;
-        while (!clazz.equals(Object.class)) {
-            Collections.addAll(fields, clazz.getDeclaredFields());
-            clazz = clazz.getSuperclass();
-        }
-        for (Model.Property field : Model.Manager.factoryFor(type).listProperties()) {
+    static void resolveDependencies(Class<?> type, Map<String, String[]> serialized) {
+        for (Model.Property field :SienaModelUtils.listProperties(SienaPlugin.pm(), type)) {
             if (field.isRelation) {
             	if(field.field.isAnnotationPresent(Embedded.class) 
-            			&& !Model.class.isAssignableFrom(field.field.getType())){
+            			&& !ClassInfo.isModel(field.field.getType())){
             		continue;
             	}
             	// ONE2ONE & ONE2MANY
@@ -488,7 +425,7 @@ public class SienaFixtures {
                     }
                 }
                 serialized.remove("object." + field.name);
-                serialized.put("object." + field.name + "." + Model.Manager.factoryFor((Class<? extends Model>)field.relationType).keyName(), ids);
+                serialized.put("object." + field.name + "." + SienaModelUtils.keyName(field.relationType), ids);
 
             }
         }

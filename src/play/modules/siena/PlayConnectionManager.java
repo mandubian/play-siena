@@ -3,6 +3,9 @@ package play.modules.siena;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+
+import javax.sql.DataSource;
+
 import play.db.DB;
 import siena.SienaException;
 import siena.jdbc.ConnectionManager;
@@ -12,6 +15,11 @@ public class PlayConnectionManager implements ConnectionManager {
     public Connection getConnection() {
         return DB.getConnection();
     }
+    
+    public DataSource getDataSource() {
+        return DB.datasource;
+    }
+
 
     public void init(Properties properties) {
     }

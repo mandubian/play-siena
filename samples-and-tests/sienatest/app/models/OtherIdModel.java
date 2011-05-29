@@ -1,13 +1,12 @@
 package models;
 
-import play.modules.siena.Model;
+import play.modules.siena.EnhancedModel;
 import siena.Generator;
 import siena.Id;
 import siena.Table;
-import siena.embed.EmbeddedMap;
 
 @Table("otherid_models")
-public class OtherIdModel extends Model{
+public class OtherIdModel extends EnhancedModel{
     @Id(Generator.AUTO_INCREMENT)
     public Long myId;
     

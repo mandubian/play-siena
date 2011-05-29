@@ -10,12 +10,12 @@ import siena.QueryJoin;
 import siena.QueryOrder;
 import siena.core.options.QueryOption;
 
-public class Query{
+public class QueryWrapper{
 	@SuppressWarnings("rawtypes")
 	siena.Query query;
 	
 	@SuppressWarnings("rawtypes")
-	public <T> Query(siena.Query query){
+	public <T> QueryWrapper(siena.Query query){
 		this.query = query;
 	}
 	
@@ -53,27 +53,27 @@ public class Query{
 		return query.options();
 	}
 
-	public <T> Query filter(String fieldName, Object value) {
+	public <T> QueryWrapper filter(String fieldName, Object value) {
 		query.filter(fieldName, value);
 		return this;
 	}
 
-	public <T> Query order(String fieldName) {
+	public <T> QueryWrapper order(String fieldName) {
 		query.order(fieldName);
 		return this;
 	}
 
-	public <T> Query join(String field, String... sortFields) {
+	public <T> QueryWrapper join(String field, String... sortFields) {
 		query.join(field, sortFields);
 		return this;
 	}
 
-	public <T> Query search(String match, String... fields) {
+	public <T> QueryWrapper search(String match, String... fields) {
 		query.search(match, fields);
 		return this;
 	}
 
-	public <T> Query search(String match, QueryOption opt, String... fields) {
+	public <T> QueryWrapper search(String match, QueryOption opt, String... fields) {
 		query.search(match, opt, fields);
 		return this;
 	}
@@ -151,68 +151,68 @@ public class Query{
 		return query.iterPerPage(limit);
 	}
 
-	public <T> Query limit(int limit) {
+	public <T> QueryWrapper limit(int limit) {
 		query.limit(limit);
 		return this;
 	}
 
-	public <T> Query offset(Object offset) {
+	public <T> QueryWrapper offset(Object offset) {
 		query.offset(offset);
 		return this;
 	}
 
-	public <T> Query paginate(int size) {
+	public <T> QueryWrapper paginate(int size) {
 		query.paginate(size);
 		return this;
 	}
 
-	public <T> Query nextPage() {
+	public <T> QueryWrapper nextPage() {
 		query.nextPage();
 		return this;
 	}
 
-	public <T> Query previousPage() {
+	public <T> QueryWrapper previousPage() {
 		query.previousPage();
 		return this;
 	}
 
-	public <T> Query customize(QueryOption... options) {
+	public <T> QueryWrapper customize(QueryOption... options) {
 		query.customize(options);
 		return this;
 	}
 
-	public <T> Query stateful() {
+	public <T> QueryWrapper stateful() {
 		query.stateful();
 		return this;
 	}
 
-	public <T> Query stateless() {
+	public <T> QueryWrapper stateless() {
 		query.stateless();
 		return this;
 	}
 
-	public <T> Query release() {
+	public <T> QueryWrapper release() {
 		query.release();
 		return this;
 	}
 
-	public <T> Query resetData() {
+	public <T> QueryWrapper resetData() {
 		query.resetData();
 		return this;
 	}
 
-	public <T> Query dump() {
+	public <T> QueryWrapper dump() {
 		query.dump();
 		return this;
 	}
 
-	public <T> Query restore(String dump) {
+	public <T> QueryWrapper restore(String dump) {
 		query.restore(dump);
 		return this;
 	}
 
-	public <T> QueryAsync async() {
-		return new QueryAsync(query.async());
+	public <T> QueryAsyncWrapper async() {
+		return new QueryAsyncWrapper(query.async());
 	}
 
 	public PersistenceManager getPersistenceManager() {

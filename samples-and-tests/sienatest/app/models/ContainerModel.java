@@ -1,6 +1,6 @@
 package models;
 
-import play.modules.siena.Model;
+import play.modules.siena.EnhancedModel;
 import siena.Column;
 import siena.Generator;
 import siena.Id;
@@ -10,7 +10,7 @@ import siena.embed.EmbeddedList;
 
 @Table("container_models")
 @EmbeddedList
-public class ContainerModel extends Model{
+public class ContainerModel extends EnhancedModel{
     @Id(Generator.NONE)
     public String id;
     

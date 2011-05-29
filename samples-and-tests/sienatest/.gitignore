@@ -11,3 +11,6 @@
 /.classpath
 /test-result
 /tmp
+/.settings
+/.classpath
+/.project
