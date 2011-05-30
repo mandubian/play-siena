@@ -55,11 +55,11 @@ public class SienaPlugin extends PlayPlugin {
         if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
         	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db config");
         }
-        if((db!=null && "postgres".contains(db)) 
-        		|| (dbUrl!=null && "postgres".contains(dbUrl))){
+        if((db!=null && db.contains("postgresql")) 
+        		|| (dbUrl!=null && dbUrl.contains("postgresql"))){
         	return "sql:postgresql";
-        }else if((db!=null && ("mem".equals(db) || "fs".equals(db) || "h2".contains(db))) 
-        		|| (dbUrl!=null && "h2".contains(dbUrl))){
+        }else if((db!=null && ("mem".equals(db) || "fs".equals(db) || db.contains("h2"))) 
+        		|| (dbUrl!=null && dbUrl.contains("h2"))){
         	return "sql:h2:mysql";
         }else {
         	return "sql:mysql";
@@ -102,7 +102,7 @@ public class SienaPlugin extends PlayPlugin {
             if(dbType.contains("postgresql")){
             	persistenceManager = new PostgresqlPersistenceManager(new PlayConnectionManager(), null);
             	ddlType = "postgresql";
-            	generator = new DdlGenerator("postgres");
+            	generator = new DdlGenerator("postgresql");
             }else if(dbType.contains("h2")){
             	// the H2 dbMode in Play is "mysql" 
             	persistenceManager = new H2PersistenceManager(new PlayConnectionManager(), null, "mysql");
