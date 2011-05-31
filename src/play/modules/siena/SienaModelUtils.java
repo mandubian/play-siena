@@ -500,11 +500,14 @@ public class SienaModelUtils {
 				q.order(keyField.getName());
 			}
 			else {
-				if(order.equals("+") || order.equals("-")){
+				if(order.equals("+")){
+					q.order(keyField.getName());
+				}
+				else if(order.equals("-")){
 					q.order(order+keyField.getName());
 				}
 				else if(order.equals("ASC")){
-					q.order("+"+keyField.getName());
+					q.order(keyField.getName());
 				}	
 				else if(order.equals("DESC")){
 					q.order("-"+keyField.getName());
@@ -519,11 +522,13 @@ public class SienaModelUtils {
 				q.order(orderBy);
 			}
 			else {
-				if(order.equals("+") || order.equals("-")){
+				if(order.equals("+")){
+					q.order(orderBy);
+				}else if(order.equals("-")){
 					q.order(order+orderBy);
 				}
 				else if(order.equals("ASC")){
-					q.order("+"+orderBy);
+					q.order(orderBy);
 				}
 				else if(order.equals("DESC")){
 					q.order("-"+orderBy);
