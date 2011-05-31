@@ -1,6 +1,6 @@
 h1. Play Siena module v2.x
 
-The siena module automatically enable "Siena":http://www.sienaproject.com support for your application.
+The siena module automatically enables "Siena":http://www.sienaproject.com support for your application for GAE/MySQL/PostgreSQL/H2 databases.
 
 
 h2. <a>Release notes</a>
@@ -28,26 +28,29 @@ h2. <a>Enable Siena in your application</a>
 
 In your __/conf/dependencies.yml__ file, enable the Siena module by adding these lines:
 
-bc. require:
+bc.. require:
     - play -> play [1.2.1,)
     - play -> siena [2.0.0,)
     
-With it, we ensure that you have at least Play 1.2.1 and siena 2.0.0.
-    
-h2. <a>Configure your database for Siena</a>
 
-Siena module simply uses database connectors configured and provided by Play.
+p. With it, we ensure that you have at least Play 1.2.1 and siena 2.0.0.
+      
+      
+h2. <a>Configure your database for Siena</a>
+      
+p(note). **Note** Configure your database: Siena module simply uses database connectors configured and provided by Play.
 
 h3. <a>Configure GAE database</a>
 
 For GAE, this is really simple as you don't need anything else but the GAE module in your dependencies.yml
 
-bc. require:
+bc.. require:
     - play -> play [1.2.1,)
     - play -> siena [2.0.0,)
     - play -> gae 1.4
 
 p(note). **IMPORTANT** Do not declare any SQL DB configuration in your __conf/application.conf__ as it would prevail on GAE configuration. 
+
 
 h3. <a>Configure SQL database</a>
 
@@ -55,22 +58,24 @@ Here, it uses exactly the configuration of Play so please directly read "Play da
 
 Some examples:
 
-bc. #uses embedded H2 in memory provided by Play
+bc.. 
+#uses embedded H2 in memory provided by Play
 db=mem
 
-bc. #uses embedded H2 in file provided by Play 
+#uses embedded H2 in file provided by Play 
 db=mem    
     
-bc. #uses MySQL 
+#uses MySQL 
 db=mysql:user:pwd@database_name  
     
-bc. #uses Postgresql 
+#uses Postgresql 
 db.url=jdbc:postgresql:sienatest
 db.driver=org.postgresql.Driver
 db.user=sienatest
 db.pass=sienatest
     
-h3. <a>Configure SQL database DDL creation/update</a>
+
+h2. <a>Configure SQL database DDL creation/update</a>
 
 In SQL, the database requires tables/indexes to be created according to your models.
 Moreover, when you change your model, you would like the tables to be modified also.
@@ -83,10 +88,11 @@ In PROD mode, you certainly want the DB to be updated only when you want.
 
 To configure Siena DDL, add the **siena.ddl** parameter to your __conf/application.conf__. Yet, it's not mandatory to add it and Siena DDL has a default behavior (see below).
 
-bc. #siena.ddl can take values create/update/none
+bc.. #siena.ddl can take values create/update/none
 siena.ddl=create
 
-h4. siena.ddl values
+
+h3. <a>__siena.ddl__ possible values</a>
 
 **siena.ddl** can take the following values:
 
@@ -96,7 +102,7 @@ h4. siena.ddl values
 |**none**|Siena DDL doesn't try to do anything|
 
   
-h4. Siena DDL default behavior
+h3. <a>Siena DDL default behavior</a>
 
 If you don't configure **siena.ddl**, here is the default behavior:    
 
@@ -112,17 +118,17 @@ p(note). **Note** Apache DDLUtils has some bugs so the version delivered with Si
 h2. <a>Using siena</a>
 
 For more informations check at the "Siena documentation":http://www.sienaproject.com/documentation.html page. 
-This documentation is no more up to date as Siena has been deeply enhanced for v1.0.0 and we are going to write much more docs very soon. Meanwhile, here are a few information to begin.
+p(note). **Note** This documentation is no more up to date as Siena has been deeply enhanced for v1.0.0 and we are going to write much more docs very soon. Meanwhile, here are a few information to begin.
 
-h3. A classical Siena model with auto-generated Long ID
-
-p(note). **Important remarks** 
+**Important remarks** 
 * The __@Id__ is mandatory
 * The __@Column__ are not mandatory (the field name are used by Siena otherwise)
 * The __all()__ function is just a facility function: you can call the __all(Employee.class)__ directly also.
 * Extending siena.Model is not mandatory but it's a Siena facility providing the active record design. For ex: @myobject.save()@  
 * The embedded classes can be defined outside the class
 * The enums can be defined outside the class
+
+h3. <a>A classical Siena model with auto-generated Long ID</a>
 
 bc.. @Table("employees")
 public class Employee extends Model {
@@ -203,7 +209,7 @@ public class Employee extends Model {
 }
 
 
-h3. A classical Siena model with manual String ID
+h3. <a>A classical Siena model with manual String ID</a>
 
 p(note). **Remark** the Generator.NONE to tell this is a manual ID
 
@@ -225,7 +231,7 @@ public class ManualStringModel extends Model{
 }
 
 
-h3. A classical Siena model with auto-generated Long ID with a non-"id" name 
+h3. <a>A classical Siena model with auto-generated Long ID with a non-"id" name</a> 
 
 bc.. @Table("otherid_models")
 public class OtherIdModel extends EnhancedModel{
@@ -244,7 +250,7 @@ public class OtherIdModel extends EnhancedModel{
     }
 }
 
-h3. A classical Siena model with UUID String ID
+h3. <a>A classical Siena model with UUID String ID</a>
 
 p(note). **Remark** the Generator.UUID to tell this is a UUID ID
 
@@ -265,7 +271,7 @@ public class UUIDModel extends EnhancedModel{
     }
 }
 
-h3. An enhanced Siena model for the lazy people
+h3. <a>An enhanced Siena model for the lazy people</a>
 
 If like me, you are very lazy and don't want to write the all() function, Siena module provides a new class called __EnhancedModel__ which uses Play! runtime enhancing mechanism to add this function (and others) to your Siena Model.
 I don't know yet whether this class is useful or not. The future will decide it.
@@ -283,7 +289,7 @@ public class ManualStringModel extends EnhancedModel{
     }
 }
 
-
 p. Then you can call:
 
 bc. ManualStringModel toto = ManualStringModel.all().filter("id", "toto").get();
+
