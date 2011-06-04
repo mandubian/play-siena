@@ -85,7 +85,7 @@ public class SienaFixtures {
      */
     @SuppressWarnings("rawtypes")
 	public static void delete(List<Class> classes) {
-        delete(classes);
+        delete(classes.toArray(new Class[classes.size()]));
     }
 
     /**
