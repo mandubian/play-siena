@@ -7,10 +7,10 @@ Release notes
 --------------------
 
 * v2.x brings support for :
-** GAE 
-** MySQL
-** Postgresql
-** H2
+	+ GAE 
+	+ MySQL
+	+ Postgresql
+	+ H2
 
 * v2.x brings support for IDs of type Long (auto-generated or manual) and String (manual or auto-generated as UUID).
 * v2.x brings a new class called __EnhancedModel__ which is a normal __siena.Model__ enhanced at runtime by Play to provide __all()__ function (and other functions also but it will be detailed later). Please see below for more details.
