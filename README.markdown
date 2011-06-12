@@ -1,7 +1,22 @@
-Siena support for Play! Framework
-=================================
+Siena support for Play! Framework v2.0
+======================================
 
-play-siena is a module for [Play! Framework](http://www.playframework.com) that adds support for [Siena](http://www.sienaproject.com/)
+The siena module automatically enables [Siena](http://www.sienaproject.com) support for your application for GAE/MySQL/PostgreSQL/H2 databases.
 
-Currently the module only only supports Google App Engine persistence manager. So it is intended to be used along with [GAE module](http://www.playframework.org/modules/gae) for Play!
+Release notes
+--------------------
 
+* v2.x brings support for :
+** GAE 
+** MySQL
+** Postgresql
+** H2
+
+* v2.x brings support for IDs of type Long (auto-generated or manual) and String (manual or auto-generated as UUID).
+* v2.x brings a new class called __EnhancedModel__ which is a normal __siena.Model__ enhanced at runtime by Play to provide __all()__ function (and other functions also but it will be detailed later). Please see below for more details.
+* v2.x  is a complete refactoring of siena module based on Siena v1.x. Yet, for those who used Siena before, it doesn't change anything as Siena v1.0.0 is 100% backward compatible (at least in theory).
+* v2.x is compatible with Play version >1.2.1 and uses dependency management.
+
+> **Note** v1.x only supported GAE but this is not the case anymore. Other NoSQL Databases will be added later.
+
+> **Note** play-siena v2.0.0 embeds siena v1.0.0-b3: don't worry about the beta3, the code is quite stable but there are lots of new features in this version and we need to evaluate them in real environments such as Play! 
