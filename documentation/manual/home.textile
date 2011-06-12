@@ -49,6 +49,8 @@ bc.. require:
     - play -> siena [2.0.0,)
     - play -> gae 1.4
 
+p(note). **IMPORTANT** Run @play deps@ before running @play run@ or you will have unknown classes error as the dependencies have not been resolved. 
+
 p(note). **IMPORTANT** Do not declare any SQL DB configuration in your __conf/application.conf__ as it would prevail on GAE configuration. 
 
 
