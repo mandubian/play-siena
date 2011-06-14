@@ -9,24 +9,22 @@ h3. <a>Create a Pagination Query</a>
 
 p. You can create a query by calling the @all()@ function.
 
-bc.. 
-int PAGE_SIZE = 100;
+bc.. int PAGE_SIZE = 100;
 Query<Employee> q = Employee.all().paginate(PAGE_SIZE);
 
+p. 
 
 h3. <a>Fetch current page</a>
 
 p. You can get current page by call the @fetch()@ function.
 
-bc.. 
-List<Employee> page1 = q.fetch();
-
+bc. List<Employee> page1 = q.fetch();
+ 
 h3. <a>Go to next page</a>
 
 p. You can go to the next page by calling the @nextPage()@ function.
 
-bc.. 
-List<Employee> page2 = q.nextPage().fetch();
+bc.. List<Employee> page2 = q.nextPage().fetch();
 List<Employee> page3 = q.nextPage().fetch();
 
 p(note). **Note** If you reach the last page and call nextPage again, it returns an empty list (size 0).
@@ -35,12 +33,10 @@ h3. <a>Go to previous page</a>
 
 p. You can go to the previous page by calling the @previousPage()@ function
 
-bc.. 
-page2 = q.previousPage().fetch();
+bc.. page2 = q.previousPage().fetch();
 page1 = q.previousPage().fetch();
 
 p(note). **Note** If you reach the first page and call previousPage again, it returns an empty list (size 0).
-
 
 
 h2. <a>Siena Pagination Modes</a>
@@ -57,8 +53,7 @@ h3. <a>Advanced Stateful Mode</a>
 
 p. You can also use the brand new @stateful()@ feature by writing:
 
-bc.. 
-Query<Employee> q = Employee.all().stateful();
+bc.. Query<Employee> q = Employee.all().stateful();
 
 p. Other operations are exactly the same as the stateless query. The difference is not here.
 p. So, what does **statefull** mean?
@@ -88,8 +83,7 @@ The steps to integrate Siena pagination into Play are quite trivial:
 
 h3. <a>Create the Controller</a>
 
-bc.. 
-public class Application extends Controller {
+bc.. public class Application extends Controller {
 	static Query<Employee> q;
 
 	@Before
@@ -136,8 +130,6 @@ p(note). **note** the query is stored with a single identifier __"q"__ which is 
 
 h3. <a>A dumb template sample</a>
 
-bc.. 
-#{extends 'main.html' /}
 #{set title:'nextPage' /}
 
 <h1>Employees (${emps.size()})</h1>
