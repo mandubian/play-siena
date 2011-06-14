@@ -18,6 +18,7 @@ import siena.Model;
 import siena.NotNull;
 import siena.Query;
 import siena.Table;
+import siena.core.batch.Batch;
 import siena.embed.At;
 import siena.embed.Embedded;
 import siena.embed.EmbeddedList;
@@ -100,5 +101,21 @@ public class Employee extends Model {
 
         public static Query<Employee> all() {
         	return Model.all(Employee.class);
+        }
+        
+        public static Batch<Employee> batch() {
+        	return Model.batch(Employee.class);
+        }
+        
+        public Employee(Employee emp){
+        	this.firstName = emp.firstName;
+        	this.lastName = emp.lastName;
+        	this.pwd = emp.pwd;
+        	this.contactInfo = new Json(emp.contactInfo);
+        	this.hireDate = emp.hireDate;
+        	this.fireDate = emp.fireDate;
+        	this.boss = emp.boss;
+        	this.enumField = emp.enumField;
+        	// ...
         }
 }
