@@ -125,13 +125,13 @@ p(note). **note** The @Before is in charge of retrieving/creating the Query from
 
 p(note). **note** The @After is in charge of storing the Query into Cache
 
-p(note). **note** nextPage/previousPage are simple actions you can use in your templates
+p(note). **note** Functions nextPage/previousPage are simple actions you can use in your templates
 
-p(note). **note** the query is stored with a single identifier __"q"__ which is not good if you have several users connected at the same time. So, you should diversify this id with a userID for ex.
+p(note). **note** The query is stored with a single identifier __"q"__ which is not good if you have several users connected at the same time. So, you should diversify this id with a userID for ex.
 
 h3. <a>A dumb template sample</a>
 
-#{set title:'nextPage' /}
+bc.. #{set title:'nextPage' /}
 
 <h1>Employees (${emps.size()})</h1>
 <p>
@@ -145,3 +145,4 @@ h3. <a>A dumb template sample</a>
     #{/list}
 </ul>
 
+p. 
