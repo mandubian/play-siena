@@ -1,0 +1,5 @@
+h1. Play/Siena Pagination tutorial
+
+This tutorial shows the usage of the new Siena v1.x pagination mechanism within a Play.
+You should see that this reduces a lot the code size and seems quite natural.
+
