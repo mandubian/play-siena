@@ -56,9 +56,11 @@ p. You can also use the brand new @stateful()@ feature by writing:
 bc.. Query<Employee> q = Employee.all().stateful();
 
 p. Other operations are exactly the same as the stateless query. The difference is not here.
-p. So, what does **statefull** mean?
+
+So, what does **stateful** mean?
 It means allocated DB resources are kept alive between calls to this query:
 * **For __SQL__**, connection/statement/resultset are kept opened and the pagination is managed with offsets as for stateless mode.
+
 The connection is kept opened between calls so when you want to release it, you can call the @release()@ function.
 
 bc. q.release()
