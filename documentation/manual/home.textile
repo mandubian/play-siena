@@ -93,6 +93,7 @@ To configure Siena DDL, add the **siena.ddl** parameter to your __conf/applicati
 bc.. #siena.ddl can take values create/update/none
 siena.ddl=create
 
+p. 
 
 h3. <a>__siena.ddl__ possible values</a>
 
