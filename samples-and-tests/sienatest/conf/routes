@@ -4,7 +4,6 @@
 
 # Home page
 GET     /                                       Application.index
-
 GET		/next									Application.nextPage
 GET		/prev									Application.previousPage
 
