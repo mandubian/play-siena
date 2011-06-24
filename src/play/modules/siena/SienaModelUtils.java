@@ -86,13 +86,13 @@ public class SienaModelUtils {
 		try {
 			BeanWrapper bw = new BeanWrapper(o.getClass());
 			// Start with relations
-			Set<Field> fields = new HashSet<Field>();
 			Class<?> spClazz = o.getClass();
+			/*Set<Field> fields = new HashSet<Field>();
 			while (spClazz!=null) {
 				Collections.addAll(fields, spClazz.getDeclaredFields());
 				spClazz = spClazz.getSuperclass();
-			}
-			for (Field field : fields) {
+			}*/
+			for (Field field : ClassInfo.getClassInfo(spClazz).queryAndAllFields) {
 				boolean isEntity = false;
 				boolean isJson = false;
 				String relation = null;
@@ -292,7 +292,7 @@ public class SienaModelUtils {
         Set<Field> fields = new LinkedHashSet<Field>();
         // can't use classInfo.allFields as we need also Query fields
         // TODO superclass fields?
-        for(Field f:clazz.getDeclaredFields()){
+        /*for(Field f:clazz.getDeclaredFields()){
         	if(f.getType() == Class.class ||
         			(f.getModifiers() & Modifier.TRANSIENT) == Modifier.TRANSIENT ||
         			(f.getModifiers() & Modifier.STATIC) == Modifier.STATIC ||
@@ -301,9 +301,9 @@ public class SienaModelUtils {
         		continue;
         	}
         	fields.add(f);
-        }
+        }*/
 
-        for (Field f : fields) {
+        for (Field f : ClassInfo.getClassInfo(clazz).queryAndAllFields) {
             Model.Property mp = buildProperty(f, pm);
             if (mp != null) {
                 properties.add(mp);
