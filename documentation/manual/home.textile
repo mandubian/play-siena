@@ -26,15 +26,23 @@ p(note). **Note** play-siena v2.0.0 embeds siena v1.0.0-b3: don't worry about th
 
 h2. <a>Enable Siena in your application</a>
 
+h3. <a>Install Siena module</a>
+
+bc. play install siena
+
+h3. <a>Configure your dependencies</a>
+
 In your __/conf/dependencies.yml__ file, enable the Siena module by adding these lines:
 
 bc.. require:
     - play -> play [1.2.1,)
     - play -> siena [2.0.0,)
     
-
 p. With it, we ensure that you have at least Play 1.2.1 and siena 2.0.0.
 
+h3. <a>Run @play deps@</a>
+
+==<br/>==
 
 h2. <a>Configure your database for Siena</a>
 
