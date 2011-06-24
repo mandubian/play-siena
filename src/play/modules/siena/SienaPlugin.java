@@ -26,6 +26,7 @@ import siena.Generator;
 import siena.Id;
 import siena.PersistenceManager;
 import siena.PersistenceManagerFactory;
+import siena.core.PersistenceManagerLifeCycleWrapper;
 import siena.gae.GaePersistenceManager;
 import siena.jdbc.H2PersistenceManager;
 import siena.jdbc.JdbcPersistenceManager;
@@ -64,6 +65,21 @@ public class SienaPlugin extends PlayPlugin {
         }else {
         	return "sql:mysql";
         }
+    }
+    
+    public boolean useLifecycle(){
+    	final String lc = Play.configuration.getProperty("siena.lifecycle");
+    	
+    	// by default doesn't use lifecycle
+    	if(lc == null) {
+    		return false;
+    	}
+    	else {
+    		if("true".equals(lc) || "yes".equals(lc)){
+    			return true; 
+    		}
+    		return false;
+    	}
     }
     
     @Override
@@ -117,7 +133,8 @@ public class SienaPlugin extends PlayPlugin {
             	generator = new DdlGenerator("mysql");
             }
 			Logger.debug("Siena DDL Type: %s", ddlType);
-            // Alter tables before installing
+			
+			// Alter tables before installing
             for(Class<?> c : classes) {
             	// adds classes to the DDL generator
             	generator.addTable(c);
@@ -169,6 +186,12 @@ public class SienaPlugin extends PlayPlugin {
 				}
 			}
 			
+			// activate lifecycle or not
+			if(useLifecycle()){
+				Logger.debug("Siena activating lifecycle management");
+				persistenceManager = new PersistenceManagerLifeCycleWrapper(persistenceManager);
+			}
+
 			// is it required ?
 			// connection.close();
             persistenceManager.init(null);
@@ -176,7 +199,14 @@ public class SienaPlugin extends PlayPlugin {
         } else {
 			Logger.debug("Siena DB Type: GAE");
             persistenceManager = new GaePersistenceManager();
-            persistenceManager.init(null);
+			
+            // activate lifecycle or not
+			if(useLifecycle()){
+				Logger.debug("Siena activating lifecycle management");
+				persistenceManager = new PersistenceManagerLifeCycleWrapper(persistenceManager);
+			}
+
+			persistenceManager.init(null);
         }
 
         // Install all classes in PersistenceManager
