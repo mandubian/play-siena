@@ -172,7 +172,8 @@ public class SienaModelUtils {
 										.get();
 								if(res!=null){
 									// sets the object to the owner field into the relation entity
-									relClass.getField(owner).set(res, o);
+									
+									siena.Util.setField(res, siena.Util.getField(relClass, owner), o);
 									res.save();
 								}
 									
