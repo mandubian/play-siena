@@ -62,7 +62,7 @@ public class SienaEnhancer extends Enhancer{
         ctClass.addMethod(findAll);
 
         // deleteAll
-        CtMethod deleteAll = CtMethod.make("public static int deleteAll() { return siena.Model.all("+entityName+".class).delete(); }", ctClass);
+        CtMethod deleteAll = CtMethod.make("public static long deleteAll() { return (long)siena.Model.all("+entityName+".class).delete(); }", ctClass);
         ctClass.addMethod(deleteAll);
   
         // findById
