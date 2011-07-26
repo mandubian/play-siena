@@ -1,0 +1,14 @@
+Play Siena release notes:
+From v2.0.3, we will try to keep tracks of modifications from now.
+The github issues are not traced because  
+
+v2.0.3
+----------------------------------------------------------
+Third draft of v1.0.0 with bug fixes and code optimization
+
+== BUG FIXES ==
+* corrected bugs on EnhancedModel functions which were not
+enhanced at all (findById, getByKey & batch)
+
+== ENHANCEMENTS ==
+* added tests for EnhancedModel enhanced functions
