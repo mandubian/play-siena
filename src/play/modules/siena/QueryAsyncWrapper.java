@@ -21,6 +21,11 @@ public class QueryAsyncWrapper{
 	}
 	
 	@SuppressWarnings("unchecked")
+	public <T> siena.core.async.QueryAsync<T> getWrappedQuery(){
+		return (siena.core.async.QueryAsync<T>)query;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public <T> Class<T> getQueriedClass(){
 		return (Class<T>)query.getQueriedClass();		
 	}

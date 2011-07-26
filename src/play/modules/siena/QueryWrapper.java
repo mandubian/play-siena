@@ -14,6 +14,11 @@ public class QueryWrapper{
 	@SuppressWarnings("rawtypes")
 	siena.Query query;
 	
+	@SuppressWarnings("unchecked")
+	public <T> siena.Query<T> getWrappedQuery(){
+		return (siena.Query<T>)query;
+	}
+	
 	@SuppressWarnings("rawtypes")
 	public <T> QueryWrapper(siena.Query query){
 		this.query = query;

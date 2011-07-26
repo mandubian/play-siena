@@ -1,6 +1,7 @@
 package play.modules.siena;
 
 import siena.core.async.SienaFuture;
+import siena.core.batch.Batch;
 import siena.core.batch.BatchAsync;
 
 @SuppressWarnings("rawtypes")
@@ -10,6 +11,11 @@ public class BatchAsyncWrapper {
 	
 	public <T> BatchAsyncWrapper(BatchAsync batchAsync){
 		this.batchAsync = batchAsync;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> BatchAsync<T> getWrappedBatch(){
+		return (BatchAsync<T>)batchAsync;
 	}
 	
 	@SuppressWarnings("unchecked")

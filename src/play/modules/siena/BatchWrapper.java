@@ -13,6 +13,11 @@ public class BatchWrapper{
 		this.batch = batch;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T> Batch<T> getWrappedBatch(){
+		return (Batch<T>)batch;
+	}
+	
 	public <T> BatchAsyncWrapper async() {
 		return new BatchAsyncWrapper(batch.async());
 	}
@@ -27,12 +32,12 @@ public class BatchWrapper{
 		return batch.delete(arg0);
 	}
 
-	public <T> int deleteByKeys(T... arg0) {
+	public int deleteByKeys(Object... arg0) {
 		return batch.deleteByKeys(arg0);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> int deleteByKeys(Iterable<T> arg0) {
+	public int deleteByKeys(Iterable<?> arg0) {
 		return batch.deleteByKeys(arg0);
 	}
 
@@ -47,12 +52,12 @@ public class BatchWrapper{
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> List<T> getByKeys(T... arg0) {
+	public <T> List<T> getByKeys(Object... arg0) {
 		return batch.getByKeys(arg0);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> List<T> getByKeys(Iterable<T> arg0) {
+	public <T> List<T> getByKeys(Iterable<?> arg0) {
 		return batch.getByKeys(arg0);
 	}
 

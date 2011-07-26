@@ -48,26 +48,55 @@ public class SienaEnhancer extends Enhancer{
         	CtMethod batch = CtMethod.make("public static play.modules.siena.BatchWrapper batch() { return new play.modules.siena.BatchWrapper(siena.Model.batch("+entityName+".class)); }", ctClass);
         	ctClass.addMethod(batch);
         }
+        
+        // getbyKey
+        try {
+        	ctClass.getDeclaredMethod("getByKey");
+        }catch(NotFoundException ex){
+        	CtMethod batch = CtMethod.make("public static play.modules.siena.EnhancedModel getByKey(Object key) { return (play.modules.siena.EnhancedModel)siena.Model.getByKey("+entityName+".class, key); }", ctClass);
+        	ctClass.addMethod(batch);
+        }
 
         // create
-        CtMethod create = CtMethod.make("public static play.modules.siena.EnhancedModel create(String name, play.mvc.Scope.Params params) { return play.modules.siena.EnhancedModel.create("+entityName+".class, name, params.all()); }",ctClass);
-        ctClass.addMethod(create);
+        try {
+        	ctClass.getDeclaredMethod("create");
+        }catch(NotFoundException ex){
+            CtMethod create = CtMethod.make("public static play.modules.siena.EnhancedModel create(String name, play.mvc.Scope.Params params) { return play.modules.siena.EnhancedModel.create("+entityName+".class, name, params.all()); }",ctClass);
+            ctClass.addMethod(create);
+        }
+
 
         // count
-        CtMethod count = CtMethod.make("public static long count() { return (long)siena.Model.all("+entityName+".class).count(); }", ctClass);
-        ctClass.addMethod(count);
+        try {
+        	ctClass.getDeclaredMethod("count");
+        }catch(NotFoundException ex){
+        	CtMethod count = CtMethod.make("public static long count() { return (long)siena.Model.all("+entityName+".class).count(); }", ctClass);
+        	ctClass.addMethod(count);
+        }
 
         // findAll
-        CtMethod findAll = CtMethod.make("public static java.util.List findAll() { return (java.util.List)siena.Model.all("+entityName+".class).fetch(); }", ctClass);
-        ctClass.addMethod(findAll);
+        try {
+        	ctClass.getDeclaredMethod("findAll");
+        }catch(NotFoundException ex){
+        	CtMethod findAll = CtMethod.make("public static java.util.List findAll() { return (java.util.List)siena.Model.all("+entityName+".class).fetch(); }", ctClass);
+        	ctClass.addMethod(findAll);
+        }
 
         // deleteAll
-        CtMethod deleteAll = CtMethod.make("public static long deleteAll() { return (long)siena.Model.all("+entityName+".class).delete(); }", ctClass);
-        ctClass.addMethod(deleteAll);
+        try {
+        	ctClass.getDeclaredMethod("deleteAll");
+       }catch(NotFoundException ex){
+        	CtMethod deleteAll = CtMethod.make("public static long deleteAll() { return (long)siena.Model.all("+entityName+".class).delete(); }", ctClass);
+        	ctClass.addMethod(deleteAll);
+        }
   
         // findById
-        CtMethod findById = CtMethod.make("public static "+entityName+" findById(Object id) { return ("+entityName+")siena.Model.all("+entityName+".class).getByKey(id); }", ctClass);
-        ctClass.addMethod(findById);
+       try {
+    	   ctClass.getDeclaredMethod("findById");
+       }catch(NotFoundException ex){
+    	   CtMethod findById = CtMethod.make("public static play.modules.siena.EnhancedModel findById(Object id) { return (play.modules.siena.EnhancedModel)siena.Model.getByKey("+entityName+".class, id); }", ctClass);
+    	   ctClass.addMethod(findById);
+       }
         
         // Done.
         applicationClass.enhancedByteCode = ctClass.toBytecode();

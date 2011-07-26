@@ -13,16 +13,19 @@ import siena.ClassInfo;
 import siena.core.batch.Batch;
 
 /**
- * Bridge between siena.Model and play.db.Model for people who don't want to implement 
- * all/batch/... functions
+ * Bridge between siena.Model and play.db.Model for people who don't want to
+ * implement all/batch/... functions
  * 
  * @author mandubian <pascal.voitot@mandubian.org>
- *
+ * 
  */
-public class EnhancedModel extends siena.Model implements Serializable, play.db.Model {
+public class EnhancedModel extends siena.Model implements Serializable,
+		play.db.Model {
 	private static final long serialVersionUID = -6970990524633907131L;
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see play.db.Model#_save()
 	 */
 	@Override
@@ -30,7 +33,9 @@ public class EnhancedModel extends siena.Model implements Serializable, play.db.
 		this.save();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see play.db.Model#_delete()
 	 */
 	@Override
@@ -38,65 +43,73 @@ public class EnhancedModel extends siena.Model implements Serializable, play.db.
 		this.delete();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see play.db.Model#_key()
 	 */
 	@Override
 	public Object _key() {
-		return siena.Util.readField(this, ClassInfo.getClassInfo(getClass()).getIdField());
+		return siena.Util.readField(this, ClassInfo.getClassInfo(getClass())
+				.getIdField());
 	}
 
-
 	// validates and inserts the entity
-    public boolean validateAndSave() {
-        if(Validation.current().valid(this).ok) {
-            this.insert();
-            return true;
-        }
-        return false;
-    }
-    
-    // functions to enhance    
-    // we don't return a siena.Query because the strict generic typed siena.Query gives compilation
-    // errors when you create a class inheriting from EnhancedModel and calling all().filter().fetch() for ex
-	public static QueryWrapper all() {
-    	throw new UnsupportedOperationException(
-              "Please extend class play.modules.siena.EnhancedModel.");
-     }
+	public boolean validateAndSave() {
+		if (Validation.current().valid(this).ok) {
+			this.insert();
+			return true;
+		}
+		return false;
+	}
 
-    public static <T extends EnhancedModel> Batch<T> batch() {
-    	throw new UnsupportedOperationException(
-    		"Please extend class play.modules.siena.EnhancedModel.");
-     }
-    
-     public static <T extends EnhancedModel> T create(String name, Params params) {
-    	 throw new UnsupportedOperationException(
-    	 	"Please extend class play.modules.siena.EnhancedModel.");
-     }
-     
-     public static long count() {
-    	 throw new UnsupportedOperationException(
- 	 		"Please extend class play.modules.siena.EnhancedModel.");
-     }
-     
-     public static <T extends EnhancedModel> List<T> findAll() {
-    	 throw new UnsupportedOperationException(
-    	 	"Please extend class play.modules.siena.EnhancedModel.");
-      }
-     
-     public static long deleteAll() {
-    	 throw new UnsupportedOperationException(
-    	 	"Please extend class play.modules.siena.EnhancedModel.");
-     }
-     
-     public static <T extends EnhancedModel> T findById(Object id) {
-    	 throw new UnsupportedOperationException(
-    	 	"Please extend class play.modules.siena.EnhancedModel.");
-     }
-     
-     
-     public static <T extends EnhancedModel> T create(Class<T> type, String name,
- 			Map<String, String[]> params) {
- 		return (T) SienaModelUtils.create(type, name, params);
- 	}
+	// functions to enhance
+	// we don't return a siena.Query because the strict generic typed
+	// siena.Query gives compilation
+	// errors when you create a class inheriting from EnhancedModel and calling
+	// all().filter().fetch() for ex
+	public static QueryWrapper all() {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static BatchWrapper batch() {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static <T extends EnhancedModel> T getByKey(Object key) {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static <T extends EnhancedModel> T create(String name, Params params) {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static long count() {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static <T extends EnhancedModel> List<T> findAll() {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static long deleteAll() {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static <T extends EnhancedModel> T findById(Object id) {
+		throw new UnsupportedOperationException(
+			"Class not enhanced correctly.");
+	}
+
+	public static <T extends EnhancedModel> T create(Class<T> type,
+			String name, Map<String, String[]> params) {
+		return (T) SienaModelUtils.create(type, name, params);
+	}
 }

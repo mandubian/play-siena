@@ -3,6 +3,8 @@ import java.util.*;
 
 import play.modules.siena.SienaFixtures;
 import play.test.*;
+import siena.Query;
+import siena.core.batch.Batch;
 import models.*;
 
 public class BasicTest extends UnitTest {
@@ -158,6 +160,41 @@ public class BasicTest extends UnitTest {
         assertEquals(emp1.boss.id, boss.id);
         assertEquals(emp2.boss.id, boss.id);
 	
+        // query wrapper
+        Query<EmployeeEnhanced> q = EmployeeEnhanced.all().getWrappedQuery();
+        emps = q.filter("firstName", "boss").fetch();
+        assertEquals(boss, emps.get(0));
+        
+        // enhanced functions tests
+        Batch<EmployeeEnhanced> b = EmployeeEnhanced.batch().getWrappedBatch();
+        List<EmployeeEnhanced> emps2 = b.getByKeys(bob.id, john.id, boss.id, emp1.id, emp2.id);
+        assertEquals(bob, emps2.get(0));
+        assertEquals(john, emps2.get(1));
+        assertEquals(boss, emps2.get(2));
+        assertEquals(emp1, emps2.get(3));
+        assertEquals(emp2, emps2.get(4));
+        
+        emps2.clear();
+        emps2 = EmployeeEnhanced.batch().getByKeys(bob.id, john.id, boss.id, emp1.id, emp2.id);
+        assertEquals(bob, emps2.get(0));
+        assertEquals(john, emps2.get(1));
+        assertEquals(boss, emps2.get(2));
+        assertEquals(emp1, emps2.get(3));
+        assertEquals(emp2, emps2.get(4));
+        
+        emps2.clear();
+        emps2 = EmployeeEnhanced.findAll();
+        assertEquals(bob, emps2.get(0));
+        assertEquals(john, emps2.get(1));
+        assertEquals(emp1, emps2.get(2));
+        assertEquals(emp2, emps2.get(3));
+        assertEquals(boss, emps2.get(4));
+        
+        assertEquals(bob, EmployeeEnhanced.findById(bob.id));
+        assertEquals(bob, EmployeeEnhanced.getByKey(bob.id));
+        assertEquals(5, EmployeeEnhanced.count());
+        EmployeeEnhanced.deleteAll();
+        assertEquals(0, EmployeeEnhanced.count());
 	}
 
 	@Test
