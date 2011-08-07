@@ -92,7 +92,7 @@ public class SienaModelUtils {
 				Collections.addAll(fields, spClazz.getDeclaredFields());
 				spClazz = spClazz.getSuperclass();
 			}*/
-			for (Field field : ClassInfo.getClassInfo(spClazz).queryAndAllFields) {
+			for (Field field : ClassInfo.getClassInfo(spClazz).allExtendedFields) {
 				boolean isEntity = false;
 				boolean isJson = false;
 				String relation = null;
@@ -304,7 +304,7 @@ public class SienaModelUtils {
         	fields.add(f);
         }*/
 
-        for (Field f : ClassInfo.getClassInfo(clazz).queryAndAllFields) {
+        for (Field f : ClassInfo.getClassInfo(clazz).allExtendedFields) {
             Model.Property mp = buildProperty(f, pm);
             if (mp != null) {
                 properties.add(mp);
