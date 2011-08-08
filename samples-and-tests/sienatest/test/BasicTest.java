@@ -3,6 +3,7 @@ import java.util.*;
 
 import play.modules.siena.SienaFixtures;
 import play.test.*;
+import siena.Model;
 import siena.Query;
 import siena.core.batch.Batch;
 import models.*;
@@ -224,6 +225,49 @@ public class BasicTest extends UnitTest {
         assertNotSame(0, chboing.myId);
         assertEquals("chboing", chboing.alpha);
         assertEquals(1, chboing.beta);
+
+        OtherIdStringModel plouf = Model.getByKey(OtherIdStringModel.class, "plouf");	
+        assertNotNull(plouf);
+        plouf.link.get();
+        assertEquals("plouf", plouf.myId);
+        assertEquals("plouf", plouf.alpha);
+        assertEquals(2, plouf.beta);
+        assertEquals(chboing.myId, plouf.link.myId);
+        assertEquals(chboing.alpha, plouf.link.alpha);
+        assertEquals(chboing.beta, plouf.link.beta);
+
+        OtherIdStringModel2 plouf2 = Model.getByKey(OtherIdStringModel2.class, "plouf2");		
+        assertNotNull(plouf2);
+        plouf2.link.get();
+        assertEquals("plouf2", plouf2.myId);
+        assertEquals("plouf2", plouf2.alpha);
+        assertEquals(3, plouf2.beta);
+        assertEquals(plouf.myId, plouf2.link.myId);
+        assertEquals(plouf.alpha, plouf2.link.alpha);
+        assertEquals(plouf.beta, plouf2.link.beta);
+        assertEquals(chboing.myId, plouf2.link.link.myId);
+
+        OtherIdStringModel2 plouf21 = Model.getByKey(OtherIdStringModel2.class, "plouf21");		
+        OtherIdStringModel2 plouf22 = Model.getByKey(OtherIdStringModel2.class, "plouf22");		
+
+        
+        OtherIdStringModel3 plouf3 = Model.getByKey(OtherIdStringModel3.class, "plouf3");		
+        List<OtherIdStringModel2> links = plouf3.links.fetch();
+        
+        assertEquals(plouf2.myId, links.get(0).myId);
+        assertEquals(plouf2.alpha, links.get(0).alpha);
+        assertEquals(plouf2.beta, links.get(0).beta);
+        assertEquals(plouf2.link.myId, links.get(0).link.myId);
+
+        assertEquals(plouf21.myId, links.get(1).myId);
+        assertEquals(plouf21.alpha, links.get(1).alpha);
+        assertEquals(plouf21.beta, links.get(1).beta);
+        assertEquals(plouf21.link.myId, links.get(1).link.myId);
+
+        assertEquals(plouf22.myId, links.get(2).myId);
+        assertEquals(plouf22.alpha, links.get(2).alpha);
+        assertEquals(plouf22.beta, links.get(2).beta);
+        assertEquals(plouf22.link.myId, links.get(2).link.myId);
 	}
 	
 	@Test

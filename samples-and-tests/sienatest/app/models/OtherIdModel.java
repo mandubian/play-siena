@@ -11,8 +11,8 @@ public class OtherIdModel extends EnhancedModel{
     public Long myId;
     
     public String 	alpha;
-    public short	beta;
-    
+    public short	beta;    
+
     public String toString() {
     	return myId + " " + alpha + " " + beta;
     }

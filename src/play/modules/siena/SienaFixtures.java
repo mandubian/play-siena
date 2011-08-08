@@ -231,7 +231,8 @@ public class SienaFixtures {
                             	
                             	if(linkedKeys != null){
 	                            	for(String linkedKey: linkedKeys){
-	                            		Object linkedObj = SienaPlugin.pm().getByKey(fieldType, idCache.get(type + "-" + linkedKey));
+	                            		Object linkedId = idCache.get(type + "-" + linkedKey);
+	                            		Object linkedObj = SienaPlugin.pm().getByKey(fieldType, linkedId);
 	                            		if(linkedObj != null){
 	                            			siena.Util.setField(linkedObj, fieldType.getField(ownerFieldName), model);
 	                            			queryObj.add(linkedObj);
