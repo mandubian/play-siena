@@ -1,6 +1,6 @@
 # Application dependencies
 
-self: play -> siena 2.0.4-SNAPSHOT
+self: play -> siena 2.0.4_work
 
 require:
     - play [1.2.1,)

@@ -5,7 +5,7 @@ The siena module automatically enables "Siena":http://www.sienaproject.com suppo
 
 h2. <a>Release notes</a>
 
-bq. **NEW** v2.0.4-SNAPSHOT embeds siena-1.0.0-b6 & corrects bug in YAML loading of models with @Id field not named "id" and YAML loading of related entities
+bq. **NEW** v2.0.4_work embeds siena-1.0.0-b6 & corrects bug in YAML loading of models with @Id field not named "id" and YAML loading of related entities
 
 bq. **NEW** v2.0.3 correcting bugs on EnhancedModel functions which were not enhanced at all (findById, getByKey & batch)
 
