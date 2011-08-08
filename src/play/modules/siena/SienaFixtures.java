@@ -231,13 +231,17 @@ public class SienaFixtures {
                             	
                             	if(linkedKeys != null){
 	                            	for(String linkedKey: linkedKeys){
-	                            		Object linkedId = idCache.get(type + "-" + linkedKey);
+	                            		// be careful: the linked entity type is the fieldType.getName() and not type
+	                            		Object linkedId = idCache.get(fieldType.getName() + "-" + linkedKey);
+	                            		if(linkedId == null){
+	                            			throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:"+fieldType.getName()+" and id:"+linkedKey+" was not found");
+	                            		}
 	                            		Object linkedObj = SienaPlugin.pm().getByKey(fieldType, linkedId);
 	                            		if(linkedObj != null){
 	                            			siena.Util.setField(linkedObj, fieldType.getField(ownerFieldName), model);
 	                            			queryObj.add(linkedObj);
 	                            		}else {
-	                            			throw new RuntimeException("AutoQuery: linkedObj of type:"+fieldType.getName()+" and id:"+linkedKey+" was not found");
+	                            			throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:"+fieldType.getName()+" and id:"+linkedKey+" was not found");
 	                            		}	                            		
 	                            	}
                             	}
