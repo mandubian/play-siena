@@ -296,8 +296,30 @@ public class BasicTest extends UnitTest {
         assertEquals(cont.embed.id, emb.id);
         assertEquals(cont.embed.alpha, emb.alpha);
         assertEquals(cont.embed.beta, emb.beta);
+
 	}
 	
+	
+	@Test
+	public void loadOtherIdStringModelNativeEmbedded() {
+		SienaFixtures.loadModels("data7.yml");
+
+        OtherIdStringModelNativeEmbedded container = Model.getByKey(OtherIdStringModelNativeEmbedded.class, "container");
+        OtherIdStringModel2 plouf2 = Model.getByKey(OtherIdStringModel2.class, "plouf2");		
+        OtherIdStringModel plouf = Model.getByKey(OtherIdStringModel.class, "plouf");	
+		OtherIdModel chboing = OtherIdModel.all().filter("alpha", "chboing").get();		
+
+        assertEquals(plouf2.myId, container.embed.myId);
+        assertEquals(plouf2.alpha, container.embed.alpha);
+        assertEquals(plouf2.beta, container.embed.beta);
+        assertEquals(plouf.myId, container.embed.link.myId);
+        assertEquals(plouf.alpha, container.embed.link.alpha);
+        assertEquals(plouf.beta, container.embed.link.beta);
+        assertEquals(chboing.myId, container.embed.link.link.myId);
+        assertEquals(chboing.alpha, container.embed.link.link.alpha);
+        assertEquals(chboing.beta, container.embed.link.link.beta);
+
+	}
     @Before
     public void setUp() {
         SienaFixtures.deleteDatabase();
