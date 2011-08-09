@@ -313,11 +313,10 @@ public class BasicTest extends UnitTest {
         assertEquals(plouf2.alpha, container.embed.alpha);
         assertEquals(plouf2.beta, container.embed.beta);
         assertEquals(plouf.myId, container.embed.link.myId);
-        assertEquals(plouf.alpha, container.embed.link.alpha);
-        assertEquals(plouf.beta, container.embed.link.beta);
-        assertEquals(chboing.myId, container.embed.link.link.myId);
-        assertEquals(chboing.alpha, container.embed.link.link.alpha);
-        assertEquals(chboing.beta, container.embed.link.link.beta);
+        assertNull(plouf2.link.alpha);
+        assertEquals(0, plouf2.link.beta);
+        assertNull(plouf2.link.link);
+        assertNull(plouf2.owner);
 
 	}
     @Before
