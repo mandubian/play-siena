@@ -68,18 +68,13 @@ public class SienaModelUtils {
 	
 	public static String keyName(Class<?> clazz) {
         Field f = keyField(clazz);
-        return (f == null) ? null : f.getName();
+        return (f == null) ? null : ClassInfo.getSimplestColumnName(f);
     }
 	
 	public static Object keyValue(Object obj) {
 		if(obj == null) return null;
         Field k = keyField(obj.getClass());
-        try {
-            // Embedded class has no key value
-            return null != k ? k.get(obj) : null;
-        } catch (Exception ex) {
-            throw new UnexpectedException(ex);
-        }
+        return null != k ? siena.Util.readField(obj, k) : null;
     }
 	
 	public static <T> T edit(T o, String name, Map<String, String[]> params, Annotation[] annotations) {
@@ -150,11 +145,14 @@ public class SienaModelUtils {
 				if (isEntity) {
 					// builds entity list for many to one
 					if (multiple) {
-						//Collection l = new ArrayList();
+						// retrieves list to synchronize new and removed objects
+						Query<?> q = (Query<?>)siena.Util.readField(o, field);
+						// no limitation for the time being
+						List<?> relObjs = q.fetch();
 
 						@SuppressWarnings("unchecked")
 						Class<? extends siena.Model> relClass = (Class<? extends siena.Model>)Play.classloader.loadClass(relation);
-						String idName = ClassInfo.getSimplestColumnName(keyField(relClass));
+						String idName = keyName(relClass);
 						String[] ids = params.get(name + "." + field.getName() + "@"+idName);
 						if(ids == null) {
 							ids = params.get(name + "." + field.getName() + "."+idName);
@@ -163,26 +161,50 @@ public class SienaModelUtils {
 						if (ids != null) {							
 							params.remove(name + "." + field.getName() + "."+idName);
 							params.remove(name + "." + field.getName() + "@"+idName);
+							
+							Field ownerField = siena.Util.getField(relClass, owner);
 							for (String _id : ids) {
 								if (_id.equals("")) {
 									continue;
 								}
-								siena.Model res = 
-									siena.Model.all(relClass)
-										.filter(idName, Binder.directBind(_id, keyType(relClass)))
-										.get();
-								if(res!=null){
-									// sets the object to the owner field into the relation entity
-									Field ownerField = siena.Util.getField(relClass, owner);
-									if(ownerField == null) {
-										throw new UnexpectedException("In related Model "+relClass.getName()+" owner field '"+owner+"' not found");
+								Object idVal = Binder.directBind(_id, keyType(relClass));
+								
+								// verifies the field is not already owned by the object
+								// if yes, no need to resave it with this owner
+								boolean b = false;
+								for(Object relObj:relObjs){
+									Object keyRelObj = keyValue(relObj);
+									if(keyRelObj != null && keyRelObj.equals(idVal)){
+										relObjs.remove(relObj);
+										b = true;
+										break;
 									}
-									siena.Util.setField(res, ownerField, o);
-									res.save();
 								}
-									
-								else Validation.addError(name+"."+field.getName(), "validation.notFound", _id);
+								if(!b){
+									siena.Model res = 
+										siena.Model.all(relClass)
+											.filter(idName, idVal)
+											.get();
+									if(res!=null){
+										// sets the object to the owner field into the relation entity
+										
+										if(ownerField == null) {
+											throw new UnexpectedException("In related Model "+relClass.getName()+" owner field '"+owner+"' not found");
+										}
+										siena.Util.setField(res, ownerField, o);
+										res.save();
+									}
+										
+									else Validation.addError(name+"."+field.getName(), "validation.notFound", _id);
+								}
+								
 							}
+							// now remaining objects have to be unowned
+							for(Object relObj:relObjs){
+								siena.Util.setField(relObj, ownerField, null);
+								SienaPlugin.pm().save(relObj);
+							}
+
 							// can't set arraylist to Query<T>
 							// bw.set(field.getName(), o, l);
 						}
@@ -191,7 +213,7 @@ public class SienaModelUtils {
 					else {
 						@SuppressWarnings("unchecked")
 						Class<? extends siena.Model> relClass = (Class<? extends siena.Model>)Play.classloader.loadClass(relation);
-						String idName = ClassInfo.getSimplestColumnName(keyField(relClass));
+						String idName = keyName(relClass);
 						String[] ids = params.get(name + "." + field.getName() + "@"+idName);
 						if(ids == null) {
 							ids = params.get(name + "." + field.getName() + "."+idName);
