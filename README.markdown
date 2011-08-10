@@ -1,4 +1,4 @@
-Siena support for Play! Framework v2.0
+Siena support for Play! Framework v2.x
 ======================================
 
 The siena module automatically enables [Siena](http://www.sienaproject.com) support for your application for GAE/MySQL/PostgreSQL/H2 databases.
@@ -19,4 +19,4 @@ Release notes
 
 > **Note** v1.x only supported GAE but this is not the case anymore. Other NoSQL Databases will be added later.
 
-> **Note** play-siena v2.0.3 embeds siena v1.0.0-b5: don't worry about the beta5, the code is quite stable but there are lots of new features in this version and we need to evaluate them in real environments such as Play! 
+> **Note** play-siena v2.0.4 embeds siena v1.0.0-b6: don't worry about the beta6, the code is quite stable! 
