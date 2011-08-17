@@ -81,7 +81,7 @@ bc..
 db=mem
 
 #uses embedded H2 in file provided by Play 
-db=mem    
+db=fs
     
 #uses MySQL 
 db=mysql:user:pwd@database_name  
