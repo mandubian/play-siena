@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import play.Logger;
 import play.Play;
@@ -426,8 +427,14 @@ public class SienaModelUtils {
             return null;
         }
 		try {
-            return SienaPlugin.pm().getByKey(clazz, 
+			// needs to manage UUID because directBind doesn't do it
+			Class<?> kt = keyType(clazz);
+			if(kt == UUID.class){
+				return SienaPlugin.pm().getByKey(clazz, UUID.fromString(id.toString()));
+			}else {
+				return SienaPlugin.pm().getByKey(clazz, 
             		Binder.directBind(id.toString(), keyType(clazz)));
+			}
         } catch (Exception e) {
             // Key is invalid, thus nothing was found
             return null;

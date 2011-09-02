@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.ddlutils.DatabaseOperationException;
 import org.apache.ddlutils.Platform;
@@ -32,6 +33,7 @@ import siena.jdbc.H2PersistenceManager;
 import siena.jdbc.JdbcPersistenceManager;
 import siena.jdbc.PostgresqlPersistenceManager;
 import siena.jdbc.ddl.DdlGenerator;
+import siena.sdb.SdbPersistenceManager;
 
 public class SienaPlugin extends PlayPlugin {
     
@@ -52,9 +54,14 @@ public class SienaPlugin extends PlayPlugin {
         }
     	
     	final String db = Play.configuration.getProperty("db");
+    	
+    	if(db != null && db.toLowerCase().equals("sdb")){
+    		return "nosql:sdb";
+    	}
+    	
         final String dbUrl = Play.configuration.getProperty("db.url");
         if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
-        	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db config");
+        	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db=xxx config");
         }
         if((db!=null && db.contains("postgresql")) 
         		|| (dbUrl!=null && dbUrl.contains("postgresql"))){
@@ -89,26 +96,27 @@ public class SienaPlugin extends PlayPlugin {
     		Play.pluginCollection.disablePlugin(play.db.jpa.JPAPlugin.class);
     	}
         // GAE ?
-        boolean gae = false;       
+        /*boolean gae = false;       
         for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
             if(plugin.getClass().getSimpleName().equals("GAEPlugin")) {
                 gae = true;
                 break;
             }
-        }
+        }*/
 
 		@SuppressWarnings("rawtypes")
 		List<Class> classes = SienaModelUtils.getSienaClasses();
+
+		// determines DB type
+		final String dbType = dbType();
         
         // DDL is for SQL and not in prod mode
-        if(!gae) {        	
+        if(dbType.startsWith("sql")) {        	
         	// JDBC
         	String ddlType = "mysql";
         	// initializes DDL Generator
 			Connection connection = new PlayConnectionManager().getConnection();
 
-			// determines DB type
-			final String dbType = dbType();
 			Logger.debug("Siena DB Type: %s", dbType);
 			final String db = Play.configuration.getProperty("db");
             final String dbUrl = Play.configuration.getProperty("db.url");
@@ -196,7 +204,7 @@ public class SienaPlugin extends PlayPlugin {
 			// connection.close();
             persistenceManager.init(null);
 			                    
-        } else {
+        } else if(dbType.equals("nosql:gae")) {
 			Logger.debug("Siena DB Type: GAE");
             persistenceManager = new GaePersistenceManager();
 			
@@ -207,6 +215,38 @@ public class SienaPlugin extends PlayPlugin {
 			}
 
 			persistenceManager.init(null);
+        }
+        else if(dbType.equals("nosql:sdb")) {
+			Logger.debug("Siena DB Type: SDB");
+            persistenceManager = new SdbPersistenceManager();
+
+            String awsAccessKeyId = Play.configuration.getProperty("siena.aws.accesskeyid");            
+            String awsSecretAccessKey = Play.configuration.getProperty("siena.aws.secretaccesskey");
+            String prefix = Play.configuration.getProperty("siena.aws.prefix", "siena_devel_");
+            String consistentread = Play.configuration.getProperty("siena.aws.consistentread", "true");
+
+            if(awsAccessKeyId == null || awsSecretAccessKey == null){
+            	throw new UnexpectedException("siena.aws.accesskeyid & siena.aws.secretaccesskey required in conf");
+            }
+            
+            Properties p = new Properties();
+            p.setProperty("implementation", "siena.sdb.SdbPersistenceManager");
+            p.setProperty("awsAccessKeyId", awsAccessKeyId);
+            p.setProperty("awsSecretAccessKey", awsSecretAccessKey);
+            p.setProperty("prefix", prefix);
+
+            
+            // activate lifecycle or not
+			if(useLifecycle()){
+				Logger.debug("Siena activating lifecycle management");
+				persistenceManager = new PersistenceManagerLifeCycleWrapper(persistenceManager);
+			}
+
+            persistenceManager.init(p);
+            
+            if(consistentread.toLowerCase().equals("true")){
+            	persistenceManager.option(SdbPersistenceManager.CONSISTENT_READ);
+            }
         }
 
         // Install all classes in PersistenceManager
