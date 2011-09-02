@@ -1,4 +1,6 @@
-h1. Play/Siena Heroku + Amazon SimpleDB tutorial
+h1. Tutorial: Play/Siena Heroku + Amazon SimpleDB + twitter bootstrap UI
+
+bq. you can see the "demo application in heroku":http://play-siena-sdb.herokuapp.com/
 
 Since Heroku introduced Java and then integrated Play deployment, it has become a really interesting platform for us play supporters. Heroku is based on Amazon Services.
 
@@ -27,12 +29,10 @@ The tutorials I used to install Heroku tools are:
 * "Heroku quickstart":http://devcenter.heroku.com/articles/quickstart
 * "Heroku Play tutorial":http://devcenter.heroku.com/articles/play
 
-I had a bug with ruby on my Ubuntu 10.04 when launching @Heroku@ command:
+p(note). *Warning* I had the following bug with ruby on my Ubuntu 10.04 when launching @Heroku@ command & it was solved thanks to "this article":http://blog.project-sierra.de/archives/1534
 
 bc. .../rubygems/custom_require.rb:31:in `gem_original_require': no such file to load -- readline (LoadError)
 
-
-It was solved following "this article":http://blog.project-sierra.de/archives/1534
 
 ==<br/>==
  
@@ -56,7 +56,7 @@ bc.. require:
     - com.amazonaws -> aws-java-sdk 1.2.4
     - org.apache.httpcomponents -> httpcore 4.1.1       
         
-p. Do not forget to let play resolve deps:
+p. *Do not forget to let play resolve deps:*
 
 bc. play deps
  
@@ -183,7 +183,7 @@ bc.. <!DOCTYPE html>
     </body>
 </html>
 
-p(note). *Note* the @padding-top: 40px@ in the <body> tag to allow content to be under the toolbar
+p(note). *Note* the @padding-top: 40px@ in the &lt;body&gt; tag to allow content to be under the toolbar
 
 p. ==<br/>==
 
@@ -242,6 +242,7 @@ $('form').submit(function() {
 });
 </script>
 
+p. 
 
 p(note). *Note* the @encodeURIComponent@ to be able to type a message composed of several words
 
@@ -322,6 +323,7 @@ bc.. public class Application extends Controller {
 	}
 }
 
+p. 
 
 p. Have a look at this code and note especially:
 * The static member @Query<Tweet> q@ representing the query which is serialized in the Cache associated to the user session. This query object can be reused and keeps the context for pagination.
@@ -418,6 +420,8 @@ $('li.next > a').click(function() {
 
 </script>
 
+p. 
+
 p. Have a look at this code and note especially:
 * the 2 @<div class="pagination">@ containing the button Previous/Next
 * the @$('li.prev > a').click@ containing the action executed when clicking on the pagination buttons and calling the @nextPage@ & @previousPage@ controller actions added in previous paragraph. It only reloads the list into the table.
@@ -430,6 +434,8 @@ h3. <a name="play-route">Add route for module crudsiena</a>
 _*conf/routes*_
 
 bc. *      	/admin             						module:crudsiena
+
+p. ==<br/>==
 
 h3. <a name="play-messages">Correct default play messages bug in Heroku Play integration</a>
 
@@ -488,13 +494,13 @@ bc. web: play run --http.port=$PORT $PLAY_OPTS
 
 p(note). *Note* @PLAY_OPTS@ can be customized using the command @heroku config:
 
-bc. heroku config:add PLAY_OPTS=... 
+bc. > heroku config:add PLAY_OPTS=... 
 
 p. ==<br/>==
 
 h3. <a name="heroku-create">Create the heroku application</a>
 
-bc. heroku create play-siena-sdb --stack cedar
+bc. > heroku create play-siena-sdb --stack cedar
 
 p. ==<br/>==
 
@@ -509,7 +515,7 @@ p. ==<br/>==
 
 h3. <a name="heroku-push">Push your app to Heroku</a>
 
-bc. git push heroku master
+bc. > git push heroku master
 
 p. You can see the Status and the logs of your app
 
