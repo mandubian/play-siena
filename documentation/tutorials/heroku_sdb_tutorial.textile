@@ -11,7 +11,10 @@ The SDB implementation has been integrated in the "play-siena module":http://www
 So here is a tutorial showing how to build a play app based on Siena+SDB deployed on Heroku.
 In order to show that Siena can replace easily JPA, this tutorial is based on "Felipe Oliveira's Tweet tutorial":http://geeks.aretotally.in/twitter-playframework-heroku.
 
-It enhances it a bit by adding a small pagination mechanism and uses "Twitter bootstrap UI toolkit":http://twitter.github.com/bootstrap/
+It enhances it a bit by adding:
+* cache usage
+* siena pagination mechanism
+* "Twitter bootstrap UI toolkit":http://twitter.github.com/bootstrap/
 
 h2. <a name="requirements">Requirements</a>
 
@@ -20,6 +23,8 @@ h3. <a name="req-aws">Amazon account</a>
 To connect to AWS SimpleDB, you need a "AWS account":http://aws.amazon.com/console/ and you need to activate SimpleDB and get 2 important data:
 * *AWS access key id*
 * *AWS secret key*
+
+_To be noted that for an unknown reason (certainly a limitation), SimpleDB provides a ConsistentRead feature that I can activate locally on my computer but it doesn't work once deployed on Heroku._
 
 h3. <a name="req-heroku">Heroku account</a>
 
@@ -127,11 +132,24 @@ _*app/controllers/Application.java*_
 
 bc.. public class Application extends Controller {
 
-	// lists all tweets ordered descendant 
+	// lists all tweets ordered descendant & cache it
 	public static void index() {
-		List<Tweet> tweets = Tweet.findLatest();
+		List<Tweet> tweets = (List<Tweet>)Cache.get("current"+session.getId());
+		if(tweets == null){
+			tweets = Model.all(Tweet.class).fetch();
+			Cache.set("current"+session.getId(), tweets, "10mn");
+		}
 
 		render(tweets);
+	}
+
+	public static void count() {
+		Integer count = (Integer)Cache.get("count");
+		if(count == null){
+			count = Model.all(Tweet.class).count();
+			Cache.set("count", count, "10mn");
+		}
+		renderTemplate("Application/count.html", count);
 	}
 
 	public static void create(String msg) {
@@ -139,13 +157,18 @@ bc.. public class Application extends Controller {
 		tweet.tweet = msg;
 		tweet.save();
 		
-		// refresh the latest tweets in case other peoplep added other tweets in parallel
-		List<Tweet> tweets = Tweet.findLatest();		
-		renderTemplate("Application/list.html", tweets);
+		// delete current page from list
+		Cache.delete("current"+session.getId());
+		Cache.delete("count");
+		renderTemplate("Application/create.html", tweet);
 	}
 }
 
-p(note). *Note* the end of @create@ function is not the same as Felipe's function because it will be useful when implementing pagination a bit further in this tutorial. Moreover, it allows several people to add tweets in parallel (we are in a distributed env) and the list will be reloaded immediately.  
+p. 
+
+p(note). *Note* index/count function cache the list/count for 10mn not to query to often the DB (I pay for this DB :) )
+
+p(note). *Note* create function cleans the cache to force a refresh because something was added
 
 p. ==<br/>==
 
@@ -205,6 +228,8 @@ bc.. #{extends 'main.html' /}
 	<form> 
 		Enter your tweet: <input name="tweet" type="text" />
 		<button class="btn primary">Tweet</button> 
+		<div class="count alert-message info" style="float:right; margin-left:10px; height:13px; width:13px;"></div>
+		<div class="msg" style="float:right"></div>
 	</form>
 </div>
 <div class="row">
@@ -235,11 +260,22 @@ $('form').submit(function() {
 	// Define Create Action
 	var createAction = #{jsAction @create(':tweet') /}
 	
-	$('.tweets').load(createAction({ tweet: encodeURIComponent($('input:first').val()) }));
+	$('.msg').load(createAction({ tweet: encodeURIComponent($('input:first').val()) }));
 
 	// Don't let the browser redirect
 	return false;
 });
+
+var currentAction = #{jsAction @currentPage() /}
+var countAction = #{jsAction @count() /}
+
+setInterval(function() {	
+	$('.tweets').load(currentAction());
+}, 5000);
+
+setInterval(function() {	
+	$('.count').load(countAction());
+}, 5000);
 </script>
 
 p. 
@@ -247,6 +283,12 @@ p.
 p(note). *Note* the @encodeURIComponent@ to be able to type a message composed of several words
 
 p(note). *Note* the @moreScripts@ containing the Twitter Bootstrap CSS link
+
+p(note). *Note* the @<div class="count">@ containing the number of tweets refreshed by a @setInterval@ calling @countAction@
+
+p(note). *Note* the @<div class="msg">@ containing the result of tweet creation
+
+p(note). *Note* the @setInterval@ refreshing the list of tweets every 5sec (this asynchronous mechanism is required by SDB non consistent read)
 
 
 p. ==<br/>==
@@ -261,6 +303,23 @@ bc.. #{list tweets}
 #{else}
 	<tr><td>No more tweets</td><td></td></tr>
 #{/else}
+
+p. ==<br/>==
+
+h3. <a name="play-create">Create the create template to display the result of a creation</a>
+
+_*app/views/application/create.html*_
+
+bc. <div class="alert-message success">Successfully added</div>
+
+p. ==<br/>==
+
+h3. <a name="play-count">Create the count template to display the result of a creation</a>
+
+_*app/views/application/count.html*_
+
+bc. ${count}
+
 
 p. ==<br/>==
 
@@ -294,34 +353,61 @@ bc.. public class Application extends Controller {
 	}
 
 	public static void index() {
-		List<Tweet> tweets = q.fetch();
+		List<Tweet> tweets = (List<Tweet>)Cache.get("current"+session.getId());
+		if(tweets == null){
+			tweets = q.fetch();
+			Cache.set("current"+session.getId(), tweets, "10mn");
+		}
 
 		render(tweets);
 	}
 
+	public static void currentPage() {
+		List<Tweet> tweets = (List<Tweet>)Cache.get("current"+session.getId());
+		if(tweets == null){
+			tweets = q.fetch();
+			Cache.set("current"+session.getId(), tweets, "10mn");
+		}
+		renderTemplate("Application/list.html", tweets);
+	}
+	
+	public static void count() {
+		Integer count = (Integer)Cache.get("count");
+		if(count == null){
+			count = Model.all(Tweet.class).count();
+			Cache.set("count", count, "10mn");
+		}
+		renderTemplate("Application/count.html", count);
+	}
+	
 	public static void nextPage() {
 		List<Tweet> tweets = q.nextPage().fetch();
+		Cache.safeReplace("current"+session.getId(), tweets, "10mn");
 
 		renderTemplate("Application/list.html", tweets);
 	}
 
 	public static void previousPage() {
 		List<Tweet> tweets = q.previousPage().fetch();
+		Cache.safeReplace("current"+session.getId(), tweets, "10mn");
 
 		renderTemplate("Application/list.html", tweets);
 	}
-
 
 	public static void create(String msg) {
 		Tweet tweet = new Tweet();
 		tweet.tweet = msg;
 		tweet.save();
 		
-		List<Tweet> tweets = q.release().fetch();
-		
-		renderTemplate("Application/list.html", tweets);
+		// releases query context
+		q.release();
+		// delete current page from list
+		Cache.delete("current"+session.getId());
+		Cache.delete("count");
+		renderTemplate("Application/create.html", tweet);
 	}
 }
+
 
 p. 
 
@@ -329,7 +415,9 @@ p. Have a look at this code and note especially:
 * The static member @Query<Tweet> q@ representing the query which is serialized in the Cache associated to the user session. This query object can be reused and keeps the context for pagination.
 * the 2 function annotated <code>@Before</code> & <code>@After</code> allowing to create the query object, retrieve it before each request and put it into the cache after.
 * The 2 functions @nextPage@ & @previousPage@ calling the query pagination functions and rendering the list template.
+* The function @currentPage@ simply retrieves the current page in cache or if not present, it refreshes.
 * The @q.release()@ call in @create@ which tells the query to reset its context so that the displayed tweets are the latest ones including the newest one.
+* The cache is still used as before but in index the query is used to keep current page.
  
 p. ==<br/>==
 
@@ -351,6 +439,8 @@ bc.. #{extends 'main.html' /}
 	<form> 
 		Enter your tweet: <input name="tweet" type="text" />
 		<button class="btn primary">Tweet</button> 
+		<div class="count alert-message info" style="float:right; margin-left:10px; height:13px; width:13px;"></div>
+		<div class="msg" style="float:right"></div>
 	</form>
 </div>
 <div class="row">
@@ -393,8 +483,11 @@ $('form').submit(function() {
 	// Define Create Action
 	var createAction = #{jsAction @create(':tweet') /}
 	
-	$('.tweets').load(createAction({ tweet: encodeURIComponent($('input:first').val()) }));
+	$('.msg').load(createAction({ tweet: encodeURIComponent($('input:first').val()) }));
 
+	setTimeout(function() {	
+		$('.msg').empty();
+	}, 3000);
 	// Don't let the browser redirect
 	return false;
 });
@@ -417,6 +510,17 @@ $('li.next > a').click(function() {
 	// Don't let the browser redirect
 	return false;
 });
+
+var currentAction = #{jsAction @currentPage() /}
+var countAction = #{jsAction @count() /}
+
+setInterval(function() {	
+	$('.tweets').load(currentAction());
+}, 5000);
+
+setInterval(function() {	
+	$('.count').load(countAction());
+}, 5000);
 
 </script>
 
