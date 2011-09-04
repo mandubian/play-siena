@@ -12,6 +12,7 @@ import org.apache.ddlutils.DatabaseOperationException;
 import org.apache.ddlutils.Platform;
 import org.apache.ddlutils.PlatformFactory;
 import org.apache.ddlutils.model.Database;
+import org.apache.ddlutils.model.Table;
 
 import play.Logger;
 import play.Play;
@@ -21,6 +22,7 @@ import play.data.binding.Binder;
 import play.db.DB;
 import play.db.Model.Property;
 import play.db.jpa.JPA;
+import play.db.jpa.JPAPlugin;
 import play.exceptions.UnexpectedException;
 import siena.ClassInfo;
 import siena.Generator;
@@ -92,8 +94,9 @@ public class SienaPlugin extends PlayPlugin {
     @Override
     public void onApplicationStart() {
     	// DISABLES JPA
-    	if(JPA.isEnabled()){
-    		Play.pluginCollection.disablePlugin(play.db.jpa.JPAPlugin.class);
+        boolean disableJPA = "true".equals(Play.configuration.getProperty("siena.jpa.disable", "true"));
+    	if(disableJPA){
+    		Play.pluginCollection.disablePlugin(JPAPlugin.class);
     	}
         // GAE ?
         /*boolean gae = false;       
@@ -114,6 +117,11 @@ public class SienaPlugin extends PlayPlugin {
         if(dbType.startsWith("sql")) {        	
         	// JDBC
         	String ddlType = "mysql";
+            if(!disableJPA) {
+	            // Need to start a JPA transaction so that DB.getConnection() can
+	            // get the connection associated to the current hibernate session
+                JPAPlugin.startTx(false);
+            }
         	// initializes DDL Generator
 			Connection connection = new PlayConnectionManager().getConnection();
 
@@ -157,41 +165,47 @@ public class SienaPlugin extends PlayPlugin {
 			// if not: 
 			// in dev mode, will be update by default
 			// in prod mode, will be none by default
+			String ddl = "none";
 			if(Play.mode.isDev()){
-				String ddl = Play.configuration.getProperty("siena.ddl", "update");
+				ddl = Play.configuration.getProperty("siena.ddl", "update");
 				Logger.debug("Siena DDL dev mode: %s", ddl);
-				if ("create".equals(ddl)) {
-					Logger.debug("Siena DDL Generator SQL: %s", platform.getCreateModelSql(database, false, false));
-					// creates tables and do not drop tables and do not continues on error 
-					try {
-						platform.createModel(connection, database, false, false);
-					}catch(DatabaseOperationException ex){
-						Logger.warn("Siena DDL createTables generated exception:%s", ex.getCause()!=null?ex.getCause():ex.getMessage());
-					}
-				}else if("update".equals(ddl)){
-					Database currentDatabase = platform.readModelFromDatabase(connection, ddlType);
-					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterModelSql(currentDatabase, database));
-					// alters tables and continues on error 
-					platform.alterModel(currentDatabase, database, true);
-				}
+			}else if(Play.mode.isProd()){
+				ddl = Play.configuration.getProperty("siena.ddl", "none");
+				Logger.debug("Siena DDL prod mode: %s", ddl);				
 			}
-			else if(Play.mode.isProd()){
-				String ddl = Play.configuration.getProperty("siena.ddl", "none");
-				Logger.debug("Siena DDL prod mode: %s", ddl);
-				if ("create".equals(ddl)) {
-					Logger.debug("Siena DDL Generator SQL: %s", platform.getCreateModelSql(database, false, false));
-					// creates tables and do not drop tables and do not continues on error 
-					try {
-						platform.createModel(connection, database, false, false);
-					}catch(DatabaseOperationException ex){
-						Logger.warn("Siena DDL createTables generated exception:%s", ex.getCause()!=null?ex.getCause():ex.getMessage());
-					}
-				}else if("update".equals(ddl)){
-					Database currentDatabase = platform.readModelFromDatabase(connection, null);
-					Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterModelSql(currentDatabase, database));
-					// alters tables and continues on error 
-					platform.alterModel(currentDatabase, database, true);
+
+			if("create".equals(ddl)){
+			    if(Logger.isDebugEnabled()) {
+			        Logger.debug("Siena DDL Generator SQL: %s", platform.getCreateModelSql(database, false, false));
+			    }
+				// creates tables and do not drop tables and do not continues on error 
+				try {
+					platform.createModel(connection, database, false, false);
+				}catch(DatabaseOperationException ex){
+					Logger.warn("Siena DDL createTables generated exception:%s", ex.getCause()!=null?ex.getCause():ex.getMessage());
 				}
+			}else if("update".equals(ddl)){
+				Database currentDatabase = platform.readModelFromDatabase(connection, ddlType);
+				
+				if(!disableJPA){
+					// Remove from the current schema those tables that are not known by Siena,
+				    // since they're likely to be JPA classes.
+				    // Iterate in reverse order since removeTable() changes the list size.
+				    for (int i = currentDatabase.getTableCount() - 1; i >= 0; i--) {
+				        Table table = currentDatabase.getTable(i);
+				        if(database.findTable(table.getName(), false) == null){
+				            Logger.debug("Keeping existing table %s", table.getName());
+				            currentDatabase.removeTable(i);
+				        }
+				    }
+				}
+				
+				if(Logger.isDebugEnabled()){
+				    Logger.debug("Siena DDL Generator SQL: %s", platform.getAlterModelSql(currentDatabase, database));
+				}
+
+                // alters tables and continues on error 
+				platform.alterModel(currentDatabase, database, true);
 			}
 			
 			// activate lifecycle or not
@@ -203,6 +217,10 @@ public class SienaPlugin extends PlayPlugin {
 			// is it required ?
 			// connection.close();
             persistenceManager.init(null);
+
+            if(!disableJPA){
+                JPAPlugin.closeTx(false);
+            }
 			                    
         } else if(dbType.equals("nosql:gae")) {
 			Logger.debug("Siena DB Type: GAE");
