@@ -130,7 +130,7 @@ public class SienaPlugin extends PlayPlugin {
         	// initializes DDL Generator
 			Connection connection = new PlayConnectionManager().getConnection();
 
-			Logger.debug("Siena DB Type: %s", dbType);
+			Logger.info("Siena DB Type: %s", dbType);
 			final String db = Play.configuration.getProperty("db");
             final String dbUrl = Play.configuration.getProperty("db.url");
             if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
