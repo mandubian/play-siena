@@ -49,29 +49,34 @@ public class SienaPlugin extends PlayPlugin {
     }
     
     public static String dbType(){
-    	for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
+    	final String db = Play.configuration.getProperty("db");
+        final String dbUrl = Play.configuration.getProperty("db.url");
+
+        for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
             if(plugin.getClass().getSimpleName().equals("GAEPlugin")) {
-                return "nosql:gae";
+            	if(dbUrl!=null && dbUrl.contains("google")){
+                	return "sql:google";
+                }
+            	else return "nosql:gae";
             }
         }
-    	
-    	final String db = Play.configuration.getProperty("db");
     	
     	if(db != null && db.toLowerCase().equals("sdb")){
     		return "nosql:sdb";
     	}
     	
-        final String dbUrl = Play.configuration.getProperty("db.url");
         if((db==null || db=="" ) && (dbUrl == null || dbUrl == "")){
         	throw new UnexpectedException("SienaPlugin : not using GAE requires at least a db=xxx config");
         }
         if((db!=null && db.contains("postgresql")) 
         		|| (dbUrl!=null && dbUrl.contains("postgresql"))){
         	return "sql:postgresql";
-        }else if((db!=null && ("mem".equals(db) || "fs".equals(db) || db.contains("h2"))) 
+        }
+        else if((db!=null && ("mem".equals(db) || "fs".equals(db) || db.contains("h2"))) 
         		|| (dbUrl!=null && dbUrl.contains("h2"))){
         	return "sql:h2:mysql";
-        }else {
+        }
+        else {
         	return "sql:mysql";
         }
     }
@@ -143,8 +148,7 @@ public class SienaPlugin extends PlayPlugin {
             	// because longvarchar and CLOB is not managed the same way in H2/MYSQL and real MYSQL
             	ddlType = "mysql";
             	generator = new DdlGenerator("h2");
-            }
-            else {
+            }else {
             	persistenceManager = new JdbcPersistenceManager(new PlayConnectionManager(), null);
             	generator = new DdlGenerator("mysql");
             }
@@ -216,7 +220,14 @@ public class SienaPlugin extends PlayPlugin {
 
 			// is it required ?
 			// connection.close();
-            persistenceManager.init(null);
+			// for googlesql, forces Google driver
+			if(dbType.contains("google")){
+				Properties p = new Properties();
+				p.setProperty("driver", "com.google.appengine.api.rdbms.AppEngineDriver");
+				persistenceManager.init(p);
+			}else {
+				persistenceManager.init(null);
+			}
 
             if(!disableJPA){
                 JPAPlugin.closeTx(false);

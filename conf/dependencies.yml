@@ -1,6 +1,6 @@
 # Application dependencies
 
-self: play -> siena 2.0.5
+self: play -> siena 2.0.6
 
 require:
     - play [1.2.1,)
