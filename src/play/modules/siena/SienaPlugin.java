@@ -221,13 +221,13 @@ public class SienaPlugin extends PlayPlugin {
 			// is it required ?
 			// connection.close();
 			// for googlesql, forces Google driver
-			if(dbType.contains("google")){
-				Properties p = new Properties();
-				p.setProperty("driver", "com.google.appengine.api.rdbms.AppEngineDriver");
-				persistenceManager.init(p);
-			}else {
+			//if(dbType.contains("google")){
+			//	Properties p = new Properties();
+			//	p.setProperty("driver", "com.google.appengine.api.rdbms.AppEngineDriver");
+			//	persistenceManager.init(p);
+			//}else {
 				persistenceManager.init(null);
-			}
+			//}
 
             if(!disableJPA){
                 JPAPlugin.closeTx(false);

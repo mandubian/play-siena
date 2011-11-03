@@ -58,12 +58,18 @@ public class GoogleSqlDBPlugin extends PlayPlugin {
     }
     
     @Override
+    public void onLoad() {
+    	if (SienaPlugin.dbType().contains("google")) {
+    		// FIRST DISABLES DBPlugin
+        	Play.pluginCollection.disablePlugin(play.db.DBPlugin.class);
+    	}
+    }
+    
+    @Override
     public void onApplicationStart() {
         if (SienaPlugin.dbType().contains("google")) {
             try {
-            	// FIRST DISABLES DBPlugin
-            	Play.pluginCollection.disablePlugin(play.db.DBPlugin.class);
-            	
+            	           	
                 Properties p = Play.configuration;
 
                 if (DB.datasource != null) {
