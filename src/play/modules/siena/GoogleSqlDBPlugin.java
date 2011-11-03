@@ -8,6 +8,8 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -15,6 +17,11 @@ import javax.sql.DataSource;
 
 import jregex.Matcher;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.dbcp.BasicDataSource;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mchange.v2.c3p0.DataSources;
+
 import play.Logger;
 import play.Play;
 import play.PlayPlugin;
@@ -27,7 +34,7 @@ import play.mvc.Http.Response;
 /**
  * The DB plugin
  */
-public class DBPlugin extends PlayPlugin {
+public class GoogleSqlDBPlugin extends PlayPlugin {
 
     public static String url = "";
     org.h2.tools.Server h2Server;
@@ -94,13 +101,27 @@ public class DBPlugin extends PlayPlugin {
                         }
                     }
 
-                    /*System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
-                    System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "OFF");
-                    ComboPooledDataSource ds = new ComboPooledDataSource();
+                    //System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
+                    //System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "OFF");
+                    
+                    // simple unpooled
+                    //DataSource ds_unpooled = DataSources.unpooledDataSource(
+                    //		"jdbc:google:rdbms://playsienatest:play-siena-test/tweetdemo", 
+                    //        "tweetsql", 
+                    //        "tweetsql");
+                    //Map overrides = new HashMap();
+                    //overrides.put("overrideDefaultUser", "tweetsql");         //Stringified property values work
+                    //overrides.put("overrideDefaultPassword", "tweetsql"); //"boxed primitives" also work                    
+                    //DataSource ds = DataSources.pooledDataSource( ds_unpooled, overrides );
+
+                    // combo
+                    /*ComboPooledDataSource ds = new ComboPooledDataSource();
                     ds.setDriverClass(p.getProperty("db.driver"));
                     ds.setJdbcUrl(p.getProperty("db.url"));
                     ds.setUser(p.getProperty("db.user"));
+                    ds.setOverrideDefaultUser(p.getProperty("db.user"));
                     ds.setPassword(p.getProperty("db.pass"));
+                    ds.setOverrideDefaultPassword(p.getProperty("db.pass"));
                     ds.setAcquireRetryAttempts(10);
                     ds.setCheckoutTimeout(Integer.parseInt(p.getProperty("db.pool.timeout", "5000")));
                     ds.setBreakAfterAcquireFailure(false);
@@ -108,10 +129,18 @@ public class DBPlugin extends PlayPlugin {
                     ds.setMinPoolSize(Integer.parseInt(p.getProperty("db.pool.minSize", "1")));
                     ds.setMaxIdleTimeExcessConnections(Integer.parseInt(p.getProperty("db.pool.maxIdleTimeExcessConnections", "0")));
                     ds.setIdleConnectionTestPeriod(10);
-                    ds.setTestConnectionOnCheckin(true);
-                    DB.datasource = ds;*/
-                    DB.datasource = new
-                    url = ds.getJdbcUrl();
+                    ds.setTestConnectionOnCheckin(true);*/
+                    
+                    // apache basic DS
+                    BasicDataSource ds = new BasicDataSource();
+                    ds.setDriverClassName(p.getProperty("db.driver"));
+                    ds.setUsername(p.getProperty("db.user"));
+                    ds.setPassword(p.getProperty("db.pass"));
+                    ds.setUrl(p.getProperty("db.url"));
+                    
+                    DB.datasource = ds;
+                    //url = ds.getJdbcUrl();
+                    url = "jdbc:google:rdbms://playsienatest:play-siena-test/tweetdemo";
                     Connection c = null;
                     try {
                         c = ds.getConnection();
@@ -120,7 +149,8 @@ public class DBPlugin extends PlayPlugin {
                             c.close();
                         }
                     }
-                    Logger.info("Connected to %s", ds.getJdbcUrl());
+                    //Logger.info("Connected to %s", ds.getJdbcUrl());
+                    Logger.info("Connected to %s", url);
 
                 }
 
