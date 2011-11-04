@@ -31,6 +31,7 @@ import siena.PersistenceManager;
 import siena.PersistenceManagerFactory;
 import siena.core.PersistenceManagerLifeCycleWrapper;
 import siena.gae.GaePersistenceManager;
+import siena.jdbc.GoogleSqlPersistenceManager;
 import siena.jdbc.H2PersistenceManager;
 import siena.jdbc.JdbcPersistenceManager;
 import siena.jdbc.PostgresqlPersistenceManager;
@@ -148,7 +149,12 @@ public class SienaPlugin extends PlayPlugin {
             	// because longvarchar and CLOB is not managed the same way in H2/MYSQL and real MYSQL
             	ddlType = "mysql";
             	generator = new DdlGenerator("h2");
-            }else {
+            }
+            else if(dbType.contains("google")){
+            	persistenceManager = new GoogleSqlPersistenceManager(new PlayConnectionManager(), null);
+            	generator = new DdlGenerator("mysql");
+            }
+            else {
             	persistenceManager = new JdbcPersistenceManager(new PlayConnectionManager(), null);
             	generator = new DdlGenerator("mysql");
             }
@@ -224,6 +230,10 @@ public class SienaPlugin extends PlayPlugin {
 			//if(dbType.contains("google")){
 			//	Properties p = new Properties();
 			//	p.setProperty("driver", "com.google.appengine.api.rdbms.AppEngineDriver");
+			//	p.setProperty("url", Play.configuration.getProperty("db.url"));
+			//	p.setProperty("user", Play.configuration.getProperty("db.user"));
+			//	p.setProperty("password", Play.configuration.getProperty("db.pass"));
+
 			//	persistenceManager.init(p);
 			//}else {
 				persistenceManager.init(null);
