@@ -2,6 +2,8 @@ h1. Tutorial: Play/Siena GAE GoogleCloud SQL
 
 bq. you can see the "demo application in GAE":http://tweetsql.appspot.com/
 
+bq. you can find the code on "bitbucket project":https://bitbucket.org/mandubian/play-siena-gae-sql
+
 GAE introduced recently GoogleCloudSQL to provide RDBMS support within Google AppEngine infrastructure. It provides another way of storing data in GAE outside the classic NoSQL datastore. It's not the same usage and is not meant to manipulate data in high-concurrent/scalable services. Apparently GoogleCloudSQL is based on MySQL servers and its scalability is provided through replication of databases in different places. Its real usage and perimeter with respect to GAE Datastore will certainly be precised along time by using it in different solutions.
  
 As Siena bridges NoSQL/Sql, supporting GoogleCloudSQL was quite natural. Here is a tutorial to use Siena + Play + GoogleCloudSql 
