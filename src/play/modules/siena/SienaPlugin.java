@@ -49,19 +49,7 @@ public class SienaPlugin extends PlayPlugin {
         return persistenceManager;
     }
     
-    public static String dbType(){
-    	final String db = Play.configuration.getProperty("db");
-        final String dbUrl = Play.configuration.getProperty("db.url");
-
-        for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
-            if(plugin.getClass().getSimpleName().equals("GAEPlugin")) {
-            	if(dbUrl!=null && dbUrl.contains("google")){
-                	return "sql:google";
-                }
-            	else return "nosql:gae";
-            }
-        }
-    	
+    public static String dbSqlType(String db, String dbUrl) {
     	if(db != null && db.toLowerCase().equals("sdb")){
     		return "nosql:sdb";
     	}
@@ -77,9 +65,27 @@ public class SienaPlugin extends PlayPlugin {
         		|| (dbUrl!=null && dbUrl.contains("h2"))){
         	return "sql:h2:mysql";
         }
+        else if(dbUrl!=null && dbUrl.contains("google")){
+        	return "sql:google";
+        }
         else {
         	return "sql:mysql";
         }
+    }
+    
+    public static String dbType(){
+    	final String db = Play.configuration.getProperty("db");
+        final String dbUrl = Play.configuration.getProperty("db.url");
+
+        for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
+            if(plugin.getClass().getSimpleName().equals("GAEPlugin")) {
+            	Logger.info("GAE environment detected");
+            	if(dbUrl!=null) return dbSqlType(db, dbUrl);
+            	else return "nosql:gae";
+            }
+        }
+    	
+        return dbSqlType(db, dbUrl);
     }
     
     public boolean useLifecycle(){

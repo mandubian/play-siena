@@ -1,19 +1,21 @@
 h1. Play Siena module v2.x
 
-The siena module automatically enables "Siena":http://www.sienaproject.com support for your application for GAE/MySQL/PostgreSQL/H2 databases.
+The siena module automatically enables "Siena":http://www.sienaproject.com support for your application for GAE/SDB & MySQL/PostgreSQL/H2/GoogleCloudSQL databases.
 
 
 h2. <a>Release notes</a>
 
-bq. **NEW** v2.0.4 embeds siena-1.0.0-b6 & provides GAE Native Embedding & corrects bug in YAML loading of models with @Id field not named "id" and YAML loading of related entities
+bq. **NEW** v2.0.6 provides integration of GoogleCloudSQL
 
-bq. **NEW** v2.0.3 correcting bugs on EnhancedModel functions which were not enhanced at all (findById, getByKey & batch)
+bq. v2.0.5 provides draft integration of Siena Amazon SDB
 
 * v2.x brings support for :
-** GAE 
+** GAE
+** AmazonSDB 
 ** MySQL
 ** Postgresql
 ** H2
+** GoogleCloudSQL
 
 * v2.x brings support for IDs of type Long (auto-generated or manual) and String (manual or auto-generated as UUID).
 
@@ -25,7 +27,7 @@ bq. **NEW** v2.0.3 correcting bugs on EnhancedModel functions which were not enh
 
 p(note). **Note** v1.x only supported GAE but this is not the case anymore. Other NoSQL Databases will be added later.
 
-p(note). **Note** play-siena v2.0.4-SNAPSHOT embeds siena v1.0.0-b6: don't worry about the beta5, the code is quite stable but there are lots of new features in this version and we need to evaluate them in real environments such as Play! 
+p(note). **Note** play-siena v2.0.x embeds siena v1.0.0-bx: don't worry about the betax, the code is quite stable but there are lots of new features in this version and we need to evaluate them in real environments such as Play! 
 
 ==<br/>==
 ==<br/>==
@@ -42,9 +44,9 @@ In your __/conf/dependencies.yml__ file, enable the Siena module by adding these
 
 bc.. require:
     - play -> play [1.2.1,)
-    - play -> siena [2.0.0,)
+    - play -> siena [2.0.5,)
     
-p. With it, we ensure that you have at least Play 1.2.1 and siena 2.0.0.
+p. With it, we ensure that you have at least Play 1.2.1 and siena 2.0.5.
 
 h3. <a>Run @play deps@</a>
 
@@ -61,8 +63,10 @@ For GAE, this is really simple as you don't need anything else but the GAE modul
 
 bc.. require:
     - play -> play [1.2.1,)
-    - play -> siena [2.0.0,)
-    - play -> gae 1.4
+    - play -> siena [2.0.5,)
+    - play -> gae [1.6.0,)
+
+p(note). **VERY IMPORTANT** COMMENT with # ALL @db=...@ in your application.conf and particularly @db=mem@  
 
 p(note). **IMPORTANT** Run @play deps@ before running @play run@ or you will have unknown classes error as the dependencies have not been resolved. 
 
@@ -70,9 +74,14 @@ p(note). **IMPORTANT** Do not declare any SQL DB configuration in your __conf/ap
 
 ==<br/>==
 
+h3. <a>Configure AmazonSDB database</a>
+
+Everything is explained in the "Heroku Siena SDB Tutorial":https://github.com/mandubian/play-siena/blob/master/documentation/tutorials/heroku_sdb_tutorial.textile
+
+
 h3. <a>Configure SQL database</a>
 
-Here, it uses exactly the configuration of Play so please directly read "Play database documentation":http://www.playframework.org/documentation/1.2.1/model#database
+Here, it uses exactly the configuration of Play so please directly read "Play database documentation":http://www.playframework.org/documentation/1.2.3/model#database
 
 Some examples:
 

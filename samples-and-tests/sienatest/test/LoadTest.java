@@ -36,6 +36,6 @@ public class LoadTest extends UnitTest {
 	
     @Before
     public void setUp() {
-        SienaFixtures.deleteDatabase();
+        //SienaFixtures.deleteDatabase();
     }
 }

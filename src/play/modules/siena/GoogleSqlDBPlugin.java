@@ -59,7 +59,8 @@ public class GoogleSqlDBPlugin extends PlayPlugin {
     
     @Override
     public void onLoad() {
-    	if (SienaPlugin.dbType().contains("google")) {
+    	// if not in dev mode and in google mode, disables classic dbplugin
+    	if (Play.mode.isProd() && SienaPlugin.dbType().contains("google")) {
     		// FIRST DISABLES DBPlugin
         	Play.pluginCollection.disablePlugin(play.db.DBPlugin.class);
     	}
@@ -67,7 +68,7 @@ public class GoogleSqlDBPlugin extends PlayPlugin {
     
     @Override
     public void onApplicationStart() {
-        if (SienaPlugin.dbType().contains("google")) {
+        if (Play.mode.isProd() && SienaPlugin.dbType().contains("google")) {
             try {
             	           	
                 Properties p = Play.configuration;
@@ -106,36 +107,6 @@ public class GoogleSqlDBPlugin extends PlayPlugin {
                             fake.close();
                         }
                     }
-
-                    //System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
-                    //System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "OFF");
-                    
-                    // simple unpooled
-                    //DataSource ds_unpooled = DataSources.unpooledDataSource(
-                    //		"jdbc:google:rdbms://playsienatest:play-siena-test/tweetdemo", 
-                    //        "tweetsql", 
-                    //        "tweetsql");
-                    //Map overrides = new HashMap();
-                    //overrides.put("overrideDefaultUser", "tweetsql");         //Stringified property values work
-                    //overrides.put("overrideDefaultPassword", "tweetsql"); //"boxed primitives" also work                    
-                    //DataSource ds = DataSources.pooledDataSource( ds_unpooled, overrides );
-
-                    // combo
-                    /*ComboPooledDataSource ds = new ComboPooledDataSource();
-                    ds.setDriverClass(p.getProperty("db.driver"));
-                    ds.setJdbcUrl(p.getProperty("db.url"));
-                    ds.setUser(p.getProperty("db.user"));
-                    ds.setOverrideDefaultUser(p.getProperty("db.user"));
-                    ds.setPassword(p.getProperty("db.pass"));
-                    ds.setOverrideDefaultPassword(p.getProperty("db.pass"));
-                    ds.setAcquireRetryAttempts(10);
-                    ds.setCheckoutTimeout(Integer.parseInt(p.getProperty("db.pool.timeout", "5000")));
-                    ds.setBreakAfterAcquireFailure(false);
-                    ds.setMaxPoolSize(Integer.parseInt(p.getProperty("db.pool.maxSize", "30")));
-                    ds.setMinPoolSize(Integer.parseInt(p.getProperty("db.pool.minSize", "1")));
-                    ds.setMaxIdleTimeExcessConnections(Integer.parseInt(p.getProperty("db.pool.maxIdleTimeExcessConnections", "0")));
-                    ds.setIdleConnectionTestPeriod(10);
-                    ds.setTestConnectionOnCheckin(true);*/
                     
                     // apache basic DS
                     BasicDataSource ds = new BasicDataSource();
@@ -145,8 +116,7 @@ public class GoogleSqlDBPlugin extends PlayPlugin {
                     ds.setUrl(p.getProperty("db.url"));
                     
                     DB.datasource = ds;
-                    //url = ds.getJdbcUrl();
-                    url = "jdbc:google:rdbms://playsienatest:play-siena-test/tweetdemo";
+                    url = ds.getUrl();
                     Connection c = null;
                     try {
                         c = ds.getConnection();

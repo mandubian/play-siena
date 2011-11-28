@@ -1,6 +1,38 @@
 Play CRUD Siena release notes:
-From v2.0.2, we will try to keep tracks of modifications from now.
-The github issues are not traced because  
+
+v2.0.6
+----------------------------------------------------------
+== BUG FIXES ==
+
+== ENHANCEMENTS ==
+* Contribution by swallez to allow Siena and JPA to be used simultaneously
+* Support for GoogleCloudSQL (needed to disable DBPLugin and c3pO when using it)
+
+v2.0.5
+----------------------------------------------------------
+== BUG FIXES ==
+
+== ENHANCEMENTS ==
+* early integration of SDB (not fully implemented on siena side but already functional)
+* tutorial to use Play+Siena+SDB on Heroku documentation/tutorials/heroku_sdb_tutorial.textile
+
+v2.0.4
+----------------------------------------------------------
+== BUG FIXES ==
+* corrects bug in YAML loading of models with @Id field not named “id”
+* YAML loading of related entities
+
+== ENHANCEMENTS ==
+* brings siena-1.0.0-b6
+* provides GAE Native Embedding 
+
+
+v2.0.3
+----------------------------------------------------------
+== BUG FIXES ==
+* correcting bugs on EnhancedModel functions which were not enhanced at all (findById, getByKey & batch)
+
+
 
 v2.0.2
 ----------------------------------------------------------
