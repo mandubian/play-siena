@@ -27,11 +27,13 @@ h4. Active the GoogleCloudSql service
 
 You can activate the service in "Google Services console":https://code.google.com/apis/console
 
+==<br/>==
 
 h4. Create/Authorize a new GAE application in your "GAE console":https://appengine.google.com/
 
 Create an application called *tweetsql*
 
+==<br/>==
 
 h4. Create a new Sql instance for your application and authorize your GAE application
 
@@ -39,6 +41,7 @@ h4. Create a new Sql instance for your application and authorize your GAE applic
 * Create an instance such as *playsienatest:play-siena-test* 
 * During instance creation, you can authorize your GAE application *tweetsql* for this instance.
 
+==<br/>==
 
 h4. Go to SQL Prompt & create database/user & grant privileges 
 
@@ -46,8 +49,9 @@ bc.. CREATE DATABASE tweetdemo;
 CREATE USER 'tweetdemo'@'localhost' identified by 'xxxxxx';
 GRANT ALL PRIVILEGES ON tweetdemo.* TO 'tweetdemo'@'localhost'
 
-p. Concerning the privileges, some information are given "there in the Google cloud sql doc":http://code.google.com/intl/fr/apis/sql/docs/commandline.html#the_sql_prompt
+bq. Concerning the privileges, some information are given "there in the Google cloud sql doc":http://code.google.com/intl/fr/apis/sql/docs/commandline.html#the_sql_prompt
 
+bq. *Note* In development mode, if you want to mimic GAE MySQL environment, you can create the same DB using the same commands in your local MySQL server (or use the H2 provided by Play directly)
 
 ==<br/>==
  
@@ -84,7 +88,7 @@ bc. play eclipsify/idealize/netbeansify
 
 p. ==<br/>==
 
-h3. <a name="play-conf">Configure SimpleDB</a>
+h3. <a name="play-conf">Configure GoogleCloudSql for production</a>
 
 _*conf/application.conf*_
 
@@ -99,12 +103,15 @@ db=mysql://tweetsql:xxxxx@localhost/tweetdemo
 %prod.db.user=tweetsql
 %prod.db.pass=xxxxxxx
 
+p. 
 
-p(note). Note that _playsienatest:play-siena-test_ is the name of the new instance create here before.
+bq. *Note* the development configuration uses MySQL (so you need to create the DB in your MySQL local server). You can also use the H2 provided by Play using _db=mem_ if you prefer.
 
-p(note). Note that _tweetdemo_ is the name of the new database create here before.
+bq. *Note* _playsienatest:play-siena-test_ is the name of the new instance create here before.
+
+bq. *Note* _tweetdemo_ is the name of the new database create here before.
  
-p(note). *IMPORTANT: remove all other _db=..._ configuration*
+bq. *IMPORTANT: remove all other _db=..._ configuration*
  
 p. ==<br/>==
 
@@ -134,7 +141,7 @@ bc.. public class Tweet extends Model {
 	}
 }
 
-p(note). *Note* the @findLatest@ function which is just a conversion to Siena syntax of the function written by Felipe in his tutorial.
+bq. *Note* the @findLatest@ function which is just a conversion to Siena syntax of the function written by Felipe in his tutorial.
 
 p. ==<br/>==
 
@@ -187,9 +194,9 @@ bc.. public class Application extends Controller {
 
 p. 
 
-p(note). *Note* index/count function cache the list/count for 10mn not to query to often the DB (I pay for this DB :) )
+bq. *Note* index/count function cache the list/count for 10mn not to query to often the DB (I pay for this DB :) )
 
-p(note). *Note* create function cleans the cache to force a refresh because something was added
+bq. *Note* create function cleans the cache to force a refresh because something was added
 
 p. ==<br/>==
 
@@ -227,7 +234,7 @@ bc.. <!DOCTYPE html>
     </body>
 </html>
 
-p(note). *Note* the @padding-top: 40px@ in the &lt;body&gt; tag to allow content to be under the toolbar
+bq. *Note* the @padding-top: 40px@ in the &lt;body&gt; tag to allow content to be under the toolbar
 
 p. ==<br/>==
 
@@ -301,15 +308,15 @@ setInterval(function() {
 
 p. 
 
-p(note). *Note* the @encodeURIComponent@ to be able to type a message composed of several words
+bq. *Note* the @encodeURIComponent@ to be able to type a message composed of several words
 
-p(note). *Note* the @moreScripts@ containing the Twitter Bootstrap CSS link
+bq. *Note* the @moreScripts@ containing the Twitter Bootstrap CSS link
 
-p(note). *Note* the @<div class="count">@ containing the number of tweets refreshed by a @setInterval@ calling @countAction@
+bq. *Note* the @<div class="count">@ containing the number of tweets refreshed by a @setInterval@ calling @countAction@
 
-p(note). *Note* the @<div class="msg">@ containing the result of tweet creation
+bq. *Note* the @<div class="msg">@ containing the result of tweet creation
 
-p(note). *Note* the @setInterval@ refreshing the list of tweets every 5sec (this asynchronous mechanism is required by SDB non consistent read)
+bq. *Note* the @setInterval@ refreshing the list of tweets every 5sec (this asynchronous mechanism is required by SDB non consistent read)
 
 
 p. ==<br/>==
@@ -610,10 +617,10 @@ p. ==<br/>==
 
 h2. <a name="deploy">Deploy on GAE</a>
 
-
 bc.. > export GAE_PATH=/.../appengine-java-sdk-1.6.0/
 > play gae:deploy --%prod
 
+bq. *Note* the *--%prod* meaning you will run in _prod_ profile when deployed in GAE and will use the CloudSql DB configuration and not the development configuration.
 
 p. ==<br/>==
 
