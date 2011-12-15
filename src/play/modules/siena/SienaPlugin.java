@@ -319,6 +319,9 @@ public class SienaPlugin extends PlayPlugin {
 	                    siena.Query<?> query = pm().createQuery(clazz).filter(keyName, 
 	                    		play.data.binding.Binder.directBind(name, annotations, id + "", SienaModelUtils.keyType(clazz)));
 	                    Object o = query.get();
+                        if(o == null) {
+                            return SienaModelUtils.create(clazz, name, params, annotations);
+                        }
 	                    return SienaModelUtils.edit(o, name, params, annotations);
 	                } catch (Exception e) {
 	                    throw new UnexpectedException(e);
