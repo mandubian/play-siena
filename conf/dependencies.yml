@@ -3,7 +3,7 @@
 self: play -> siena 2.0.6
 
 require:
-    - play 1.2.3
+    - play [1.2.3,)
     - commons-collections -> commons-collections 3.1 
     - commons-beanutils -> commons-beanutils 1.7.0 
     - commons-beanutils -> commons-beanutils-core 1.7.0 
