@@ -22,6 +22,7 @@ import play.Logger;
 import play.Play;
 import play.data.binding.BeanWrapper;
 import play.data.binding.Binder;
+import play.data.binding.RootParamNode;
 import play.data.validation.Validation;
 import play.db.Model;
 import play.db.Model.Property;
@@ -286,8 +287,14 @@ public class SienaModelUtils {
 			// v1.0.x code
 			// bw.bind(name, o.getClass(), params, "", o);
 
+            RootParamNode paramNode = RootParamNode.convert(params);
+            // no http params to bind this object ? so we won't try to bind this object
+            if(paramNode.getChild(name) == null) {
+                return null;
+            }
 			// v1.1 compliant
-			bw.bind(name, (Type)o.getClass(), params, "", o, o.getClass().getAnnotations());
+
+            bw.bind(name, (Type)o.getClass(), params, "", o, o.getClass().getAnnotations());
 			
 			return (T) o;
 		} catch (Exception e) {
