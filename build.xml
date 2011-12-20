@@ -15,6 +15,12 @@
         </fileset>
     </path>
 
+    <target name="install" depends="build">
+        <!-- urg ! The version shoudn't be hardcoded here, you know... -->
+        <copy todir="${play.path}/modules/siena-2.0.6/lib"
+              file="lib/play-siena.jar" overwrite="true"/>
+    </target>
+
     <target name="build" depends="compile">
 
         <copy todir="tmp/classes">
