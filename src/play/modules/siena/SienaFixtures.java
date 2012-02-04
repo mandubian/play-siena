@@ -210,45 +210,45 @@ public class SienaFixtures {
 						@SuppressWarnings("rawtypes")
 						List queryObj = new ArrayList();
                                                 
-                        for(Field f : model.getClass().getFields()) {
-							if (f.getType().isAssignableFrom(Map.class)) {
-								f.set(model, objects.get(key).get(f.getName()));
-							} else if (f.getType().equals(byte[].class)) {
-                                f.set(model, objects.get(key).get(f.getName()));
-                            } else if(Json.class.isAssignableFrom(f.getType())){
-                            	Object obj = objects.get(key).get(f.getName());
-                            	Json json = new Json(obj);
-    							if(json!=null){
-    								f.set(model, json);
-    							}
-                            } else if(f.isAnnotationPresent(Embedded.class) && List.class.isAssignableFrom(f.getType())){ 
-                           		Object obj = objects.get(key).get(f.getName());
-                           		f.set(model, obj);
-                            } else if(siena.Query.class.isAssignableFrom(f.getType())){
-                                final Class<?> fieldType = (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
-                        		final String ownerFieldName = f.getAnnotation(Filter.class).value();
-                            	ArrayList<String> linkedKeys = (ArrayList<String>)objects.get(key).get(f.getName());
-                            	
-                            	if(linkedKeys != null){
-	                            	for(String linkedKey: linkedKeys){
-	                            		// be careful: the linked entity type is the fieldType.getName() and not type
-	                            		Object linkedId = idCache.get(fieldType.getName() + "-" + linkedKey);
-	                            		if(linkedId == null){
-	                            			throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:"+fieldType.getName()+" and id:"+linkedKey+" was not found");
-	                            		}
-	                            		Object linkedObj = SienaPlugin.pm().getByKey(fieldType, linkedId);
-	                            		if(linkedObj != null){
-	                            			siena.Util.setField(linkedObj, fieldType.getField(ownerFieldName), model);
-	                            			queryObj.add(linkedObj);
-	                            		}else {
-	                            			throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:"+fieldType.getName()+" and id:"+linkedKey+" was not found");
-	                            		}	                            		
-	                            	}
-                            	}
-                            }
-						}
-						
-                        SienaPlugin.pm().save(model);
+            for (Field f : model.getClass().getFields()) {
+              if (objects.get(key).containsKey(f.getName())) {
+                Object obj = objects.get(key).get(f.getName());
+                if (f.getType().isAssignableFrom(Map.class) ||
+                    f.getType().equals(byte[].class) ||
+                    (f.isAnnotationPresent(Embedded.class) &&
+                     List.class.isAssignableFrom(f.getType()))) {
+                  f.set(model, obj);
+                } else if(Json.class.isAssignableFrom(f.getType())){
+                  f.set(model, new Json(obj));
+                } else if(siena.Query.class.isAssignableFrom(f.getType())) {
+                  final Class<?> fieldType = (Class<?>)
+                      ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
+                  final String ownerFieldName = f.getAnnotation(Filter.class).value();
+                  ArrayList<String> linkedKeys = (ArrayList<String>)obj;
+
+                  if(linkedKeys != null){
+                    for(String linkedKey: linkedKeys){
+                      // be careful: the linked entity type is the fieldType.getName() and not type
+                      Object linkedId = idCache.get(fieldType.getName() + "-" + linkedKey);
+                      if(linkedId == null){
+                        throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:" +
+                            fieldType.getName() + " and id:" + linkedKey + " was not found");
+                      }
+
+                      Object linkedObj = SienaPlugin.pm().getByKey(fieldType, linkedId);
+                      if(linkedObj != null){
+                        siena.Util.setField(linkedObj, fieldType.getField(ownerFieldName), model);
+                        queryObj.add(linkedObj);
+                      }else {
+                        throw new RuntimeException("YAML AutoQuery mapping: linkedObj of type:" + 
+                            fieldType.getName() + " and id:" + linkedKey + " was not found");
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            SienaPlugin.pm().save(model);
                         
                         // saves autoquery objects
                         if(!queryObj.isEmpty()){
