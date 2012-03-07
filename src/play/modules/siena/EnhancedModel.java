@@ -54,8 +54,17 @@ public class EnhancedModel extends siena.Model implements Serializable,
 				.getIdField());
 	}
 
-	// validates and inserts the entity
+	// validates and saves the entity
 	public boolean validateAndSave() {
+		if (Validation.current().valid(this).ok) {
+			this.save();
+			return true;
+		}
+		return false;
+	}
+	
+	// validates and inserts the entity
+	public boolean validateAndInsert() {
 		if (Validation.current().valid(this).ok) {
 			this.insert();
 			return true;
